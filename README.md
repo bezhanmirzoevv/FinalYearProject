@@ -14,7 +14,7 @@ Web Sudoku Puzzle Game
 > Welcome to my Sudoku puzzle game! - An interactive web Sudoku puzzle game developed in HTML, CSS, and JavaScript.
 
 ### Live Demo
-🔗 https://huaminghuangtw.github.io/Web-Sudoku-Puzzle-Game/
+🔗 https://bezhanmirzoevv.github.io/FinaYearProject/
 
 ---
 

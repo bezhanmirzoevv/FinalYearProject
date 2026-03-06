@@ -64,10 +64,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     // Add event listener to "Tips" button
     id("tips-btn").addEventListener("click", display_tips);
-    // Add event listener to "Show solution" button
-    id("solve-btn").addEventListener("click", show_solution);
-    // Add event listener to "Solve one step" button
-    id("solve-one-step-btn").addEventListener("click", solve_one_step);
     // Add event listener to "Refresh puzzle" button
     id("refresh-btn").addEventListener("click", refresh_puzzle);
     // Add event listener to "Restart puzzle" button
@@ -76,16 +72,6 @@ document.addEventListener('DOMContentLoaded', function() {
     id("pause-btn").addEventListener("click", pause);
     // Add event listener to "Resume" button
     id("resume-btn").addEventListener("click", resume);
-    // Add event listener to components of social media panel
-    const floating_btn = qs(".floating-btn");
-    const close_btn = qs(".close-btn");
-    const social_panel_container = qs(".social-panel-container");
-    floating_btn.addEventListener("click", () => {
-        social_panel_container.classList.toggle("visible");
-    });
-    close_btn.addEventListener("click", () => {
-        social_panel_container.classList.remove("visible");
-    });
 });
 
 function resetGame() {
@@ -189,8 +175,6 @@ function resetGame() {
     id("number-container").classList.remove("hidden");
     // Set button accessibility
     id("tips-btn").disabled = false;
-    id("solve-btn").disabled = false;
-    id("solve-one-step-btn").disabled = false;
     id("refresh-btn").disabled = false;
     id("restart-btn").disabled = false;
     id("pause-btn").disabled = false;
@@ -266,8 +250,6 @@ function endGame() {
     });
     // Set button accessibility
     id("tips-btn").disabled = true;
-    id("solve-btn").disabled = true;
-    id("solve-one-step-btn").disabled = true;
     id("pause-btn").disabled = true;
     id("resume-btn").disabled = true;
 }
@@ -426,8 +408,6 @@ function show_solution() {
     pause();
     // Set button accessibility
     id("tips-btn").disabled = true;
-    id("solve-btn").disabled = true;
-    id("solve-one-step-btn").disabled = true;
     id("resume-btn").disabled = true;
     // Display message to the user
     swal({
@@ -481,8 +461,6 @@ function pause() {
     }
     // Set button accessibility
     id("tips-btn").disabled = true;
-    id("solve-btn").disabled = true;
-    id("solve-one-step-btn").disabled = true;
 }
 
 function resume() {
@@ -494,8 +472,6 @@ function resume() {
     }
     // Set button accessibility
     id("tips-btn").disabled = false;
-    id("solve-btn").disabled = false;
-    id("solve-one-step-btn").disabled = false;
 }
 
 // Helper functions

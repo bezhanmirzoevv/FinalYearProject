@@ -98,6 +98,19 @@ footer {
     color: #6c757d !important;
 }
 
+.questionnaire-btn {
+    display: inline-block;
+    padding: 5px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #24292f;
+    background-color: #f6f8fa;
+    border: 1px solid rgba(27,31,36,0.15);
+    border-radius: 6px;
+    text-decoration: none;
+    line-height: 20px;
+}
+
 .mybutton {
     display: inline-block;
     padding: 0.75rem 1.25rem;

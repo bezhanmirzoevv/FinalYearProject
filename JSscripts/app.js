@@ -96,10 +96,11 @@ function resetGame() {
     // Initialize variables
     lives = 3;
     disableSelect = false;
+    timerType = "stopwatch";
     // Display number of lives remaining/left
     displayLives(lives);
     // Set how long the timer should be
-    if (id("time-3mins").checked) {
+    /*if (id("time-3mins").checked) {
         TIME_LIMIT = 60 * 3;
         timerType = "countdown";
     } else if (id("time-5mins").checked) {
@@ -110,7 +111,7 @@ function resetGame() {
         timerType = "countdown";
     } else if (id("time-stopwatch").checked) {
         timerType = "stopwatch";
-    }
+    }*/
     // Set up elements
     if (timerType == "countdown") {
         id("time-1").classList.remove("hidden");
@@ -220,6 +221,7 @@ function startGame() {
     } else if (id("difficulty-veryhard").checked) {
         inputBoard = generateSudoku("very-hard");
     }
+
     // Initialize game with the given inputBoard
     initializeGame(inputBoard);
 }

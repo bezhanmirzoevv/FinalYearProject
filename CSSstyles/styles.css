@@ -49,6 +49,7 @@ h1 {
     margin-left: 50px;
     margin-top: 5px;
     margin-bottom: 5px;
+    cursor: pointer;
 }
 
 #board {
@@ -68,6 +69,7 @@ h1 {
     margin: 0px;
     vertical-align: middle;
     font-size: 40pt;
+    cursor: default;
 }
 
 p.selected {
@@ -198,6 +200,14 @@ footer {
     max-height: 100px;
 }
 
+/* Visual cues */
+.match-highlight {
+    background-color: #ffd966;
+}
+
+.row-col-highlight {
+    background-color: #bebebe;
+}
 
 /* Animation */
 

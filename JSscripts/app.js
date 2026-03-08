@@ -55,6 +55,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     for (let i = 0; i < id("number-container").children.length; i++) {
                         id("number-container").children[i].classList.remove("selected");
                     }
+                    clearHighlights();
                     this.classList.add("selected");
                     selectedNum = this;
                     updateMove();
@@ -267,6 +268,9 @@ function readInput(file) {
                 }
                 inputBoard = inputBoard.replaceAll('0', '.');
                 inputBoard = inputBoard.replaceAll(' ', '');
+                inputBoard = inputBoard.replace(/\r/g, '');
+                inputBoard = inputBoard.trim();
+                inputBoard = inputBoard.substring(0, 81);
             }
         }
     }
@@ -276,33 +280,44 @@ function readInput(file) {
 
 function generateBoard(board) {
     clearPrevious();
+
     for (let i = 0; i < board.length; i++) {
         let tile = document.createElement("p");
-        if (board[i] == BLANK_CHAR) {
-            tile.addEventListener("click", function() {
-                if (!disableSelect) {
-                    if (tile.classList.contains("selected")) {
-                        tile.classList.remove("selected");
-                        selectedTile = null;
-                    } else {
-                        let tiles = qsa(".tile");
-                        for (let i = 0; i < tiles.length; i++) {
-                            tiles[i].classList.remove("selected");
-                        }
-                        this.classList.add("selected");
-                        selectedTile = tile;
-                        updateMove();
-                    }
-                }
-            });
-        } else {
-            tile.textContent = board[i];
-        }
         tile.id = i;
         tile.classList.add("tile");
+
+        if (board[i] != BLANK_CHAR) {
+            tile.textContent = board[i];
+        }
+
+        tile.addEventListener("click", function() {
+            if (disableSelect) return;
+
+            // If this tile already has a number, highlight all matching numbers
+            if (tile.textContent !== "") {
+                clearHighlights();
+                highlightMatchingNumbers(tile.textContent);
+                return;
+            }
+
+            // Otherwise keep the normal blank-tile behaviour
+            if (tile.classList.contains("selected")) {
+                tile.classList.remove("selected");
+                selectedTile = null;
+                clearHighlights();
+            } else {
+                tile.classList.add("selected");
+                selectedTile = tile;
+                highlightRowAndColumn(tile);
+                updateMove();
+            }
+        });
+
         id("board").appendChild(tile);
+
         let row = Math.floor(i / board_size) + 1;
         let col = i % board_size + 1;
+
         if (col % box_size == 0 && col != board_size) {
             tile.classList.add("rightBorder");
         }
@@ -497,4 +512,60 @@ function setIntervalImmediately(func, interval) {
 function setCharAt(str, index, chr) {
     if (index > str.length - 1) return str;
     return str.substring(0, index) + chr + str.substring(index + 1);
+}
+
+function clearHighlights() {
+    let tiles = qsa(".tile");
+    for (let i = 0; i < tiles.length; i++) {
+        tiles[i].classList.remove("match-highlight");
+        tiles[i].classList.remove("row-col-highlight");
+    }
+    let numbers = id("number-container").children;
+    for (let i = 0; i < numbers.length; i++) {
+        numbers[i].classList.remove("match-highlight");
+    }
+    if (selectedTile) {
+        selectedTile.classList.remove("selected");
+        selectedTile = null;
+    }
+    if (selectedNum) {
+        selectedNum.classList.remove("selected");
+        selectedNum = null;
+    }
+}
+
+function highlightMatchingNumbers(value) {
+    if (!value) return;
+
+    let tiles = qsa(".tile");
+    for (let i = 0; i < tiles.length; i++) {
+        if (tiles[i].textContent === value) {
+            tiles[i].classList.add("match-highlight");
+        }
+    }
+
+    let numbers = id("number-container").children;
+    for (let i = 0; i < numbers.length; i++) {
+        if (numbers[i].textContent === value) {
+            numbers[i].classList.add("match-highlight");
+        }
+    }
+}
+
+function highlightRowAndColumn(tile) {
+    if (!tile) return;
+
+    let tileIndex = parseInt(tile.id);
+    let row = Math.floor(tileIndex / board_size);
+    let col = tileIndex % board_size;
+
+    let tiles = qsa(".tile");
+    for (let i = 0; i < tiles.length; i++) {
+        let currentRow = Math.floor(i / board_size);
+        let currentCol = i % board_size;
+
+        if (currentRow === row || currentCol === col) {
+            tiles[i].classList.add("row-col-highlight");
+        }
+    }
 }

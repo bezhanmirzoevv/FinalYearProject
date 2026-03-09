@@ -373,7 +373,9 @@ btn-check:focus+.btn-outline-primary,
 }
 
 .toast {
-    width: 350px;
+    position: relative;
+    left: 2rem;
+    width: 250px;
     max-width: 100%;
     font-size: 0.875rem;
     pointer-events: auto;

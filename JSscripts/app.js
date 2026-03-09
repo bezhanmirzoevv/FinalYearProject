@@ -291,11 +291,14 @@ function generateBoard(board) {
         }
 
         tile.addEventListener("click", function() {
+            clearHighlights();
             if (disableSelect) return;
 
             // If this tile already has a number, highlight all matching numbers
             if (tile.textContent !== "") {
-                clearHighlights();
+                if (selectedTile) {selectedTile.classList.remove("selected");
+                    selectedTile = null;
+                }
                 highlightMatchingNumbers(tile.textContent);
                 return;
             }
@@ -304,8 +307,8 @@ function generateBoard(board) {
             if (tile.classList.contains("selected")) {
                 tile.classList.remove("selected");
                 selectedTile = null;
-                clearHighlights();
             } else {
+                if (selectedTile) {selectedTile.classList.remove("selected");}
                 tile.classList.add("selected");
                 selectedTile = tile;
                 highlightRowAndColumn(tile);
@@ -328,17 +331,22 @@ function generateBoard(board) {
 }
 
 function updateMove() {
+    clearHighlights();
     if (selectedTile && selectedNum) {
         selectedTile.textContent = selectedNum.textContent;
         if (isCorrect(selectedTile)) {
+            selectedTile.classList.add("correct");
             // Update the curernt status of Sudoku board
             currentBoard[Math.floor(selectedTile.id / board_size)][selectedTile.id % board_size] =
                 selectedNum.textContent;
-            // Update selectedTile and selectedNum
-            selectedTile.classList.remove("selected");
-            selectedNum.classList.remove("selected");
-            selectedTile = null;
-            selectedNum = null;
+            setTimeout(function() {
+                selectedTile.classList.remove("correct");
+                // Update selectedTile and selectedNum
+                selectedTile.classList.remove("selected");
+                selectedNum.classList.remove("selected");
+                selectedTile = null;
+                selectedNum = null;
+            }, 1000);
             if (isDone()) { endGame(); }
         } else {
             disableSelect = true;
@@ -359,6 +367,7 @@ function updateMove() {
                 selectedNum = null;
             }, 1000);
         }
+        bootstrap.Toast.getInstance(id("myToast")).hide();
     }
 }
 
@@ -395,7 +404,7 @@ function displayLives(lives) {
 }
 
 function display_tips() {
-    // Get and print candidates of each empty cell on the current board
+    /*// Get and print candidates of each empty cell on the current board
     candidates = get_candidates(board_grid_to_string(currentBoard));
     console.log(board_grid_to_display_string(candidates));
     qs(".toast-body").textContent = board_grid_to_display_string(candidates);
@@ -403,6 +412,39 @@ function display_tips() {
     var myToast = new bootstrap.Toast(id("myToast"), {
         delay: 3000
     });
+    myToast.show();*/
+    candidates = get_candidates(board_grid_to_string(currentBoard));
+
+    let tips = [];
+    
+    for (let r = 0; r < board_size; r++) {
+        for (let c = 0; c < board_size; c++) {
+            // Only check empty cells
+            if (currentBoard[r][c] === BLANK_CHAR || currentBoard[r][c] === ".") {
+                let possible = candidates[r][c];
+                // If only one candidate, it can be solved
+                if (possible.length === 1) {
+                    tips.push(
+                        "Row " + (r+1) + ", Col " + (c+1) + " → " + possible
+                    );
+                }
+            }
+        }
+    }
+
+    // Take only the first 10 tips
+    tips = tips.slice(0, 10);
+
+    if (tips.length === 0) {
+        qs(".toast-body").textContent = "No simple moves found.";
+    } else {
+        qs(".toast-body").innerHTML = tips.map(tip => `<div class="tip-line">${tip}</div>`).join("");
+    }
+
+    var myToast = new bootstrap.Toast(id("myToast"), {
+        delay: 300000
+    });
+
     myToast.show();
 }
 
@@ -523,14 +565,6 @@ function clearHighlights() {
     let numbers = id("number-container").children;
     for (let i = 0; i < numbers.length; i++) {
         numbers[i].classList.remove("match-highlight");
-    }
-    if (selectedTile) {
-        selectedTile.classList.remove("selected");
-        selectedTile = null;
-    }
-    if (selectedNum) {
-        selectedNum.classList.remove("selected");
-        selectedNum = null;
     }
 }
 

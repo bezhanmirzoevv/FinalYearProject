@@ -80,6 +80,10 @@ p.incorrect {
     color: red;
 }
 
+p.correct {
+    color: green;
+}
+
 .rightBorder {
     border-right: 4px solid black;
 }
@@ -208,6 +212,7 @@ footer {
 .row-col-highlight {
     background-color: #bebebe;
 }
+
 
 /* Animation */
 

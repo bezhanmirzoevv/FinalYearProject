@@ -1,15 +1,22 @@
 // Global variables
 var inputBoard;
 var currentBoard;
+var lastBoardState;
 var candidates;
 var solution;
 var board_size = 9;
 var box_size = 3;
-var lives;
 var selectedNum;
 var selectedTile;
 var disableSelect;
 var timerType;
+var tips = [];
+var score;
+var scaleFactor = 1000;
+var lastMoveTime;
+var pauseStartTime;
+var wrongInputsSinceLastMove;
+var selectedCellCandidateCount;
 
 
 // Run script once DOM is loaded
@@ -81,11 +88,15 @@ function resetGame() {
     // Close alert if it exists
     if (id("alert-pause")) { $("#alert-pause").slideUp("200"); }
     // Initialize variables
-    lives = 3;
     disableSelect = false;
     timerType = "stopwatch";
-    // Display number of lives remaining/left
-    displayLives(lives);
+    lastBoardState = null;
+    score = 0;
+    wrongInputsSinceLastMove = 0;
+    lastMoveTime = Date.now();
+    selectedCellCandidateCount = 0;
+    displayScore(score);
+
     // Set how long the timer should be
     /*if (id("time-3mins").checked) {
         TIME_LIMIT = 60 * 3;
@@ -213,12 +224,14 @@ function startGame() {
 
 function endGame() {
     disableSelect = true;
+
     if (timerType == "countdown") {
         cancelAnimationFrame(countdown_timer);
         var t = formatTime(timeLeft).split(":");
         var m = t[0];
         var s = t[1];
-        if (lives == 0 || (parseInt(m, 10) == 0 && parseInt(s, 10) == 0)) {
+
+        if (parseInt(m, 10) == 0 && parseInt(s, 10) == 0) {
             var x = id("snackbar-lose");
             var audio = new Audio('./audio/audio-lose.wav');
             title_txt = "GAME OVER.😮";
@@ -227,29 +240,27 @@ function endGame() {
             var audio = new Audio('./audio/audio-win.wav');
             title_txt = "Congrats!🎉";
         }
+
     } else if (timerType == "stopwatch") {
         cancelAnimationFrame(stopwatch);
-        if (lives == 0) {
-            var x = id("snackbar-lose");
-            var audio = new Audio('./audio/audio-lose.wav');
-            title_txt = "GAME OVER.😮";
-        } else {
-            var x = id("snackbar-win");
-            var audio = new Audio('./audio/audio-win.wav');
-            title_txt = "Congrats!🎉";
-        }
+        var x = id("snackbar-win");
+        var audio = new Audio('./audio/audio-win.wav');
+        title_txt = "Congrats!🎉";
     }
+
     audio.play();
     x.classList.add("show");
+
     setTimeout(function() {
         x.classList.remove("show");
     }, 2999);
+
     swal({
         title: title_txt,
         text: "Try again? Press 'New game!' or 'Refresh/Restart puzzle' button.🚀",
         icon: "info",
     });
-    // Set button accessibility
+
     id("tips-btn").disabled = true;
     id("pause-btn").disabled = true;
     id("resume-btn").disabled = true;
@@ -333,12 +344,19 @@ function generateBoard(board) {
 function updateMove() {
     clearHighlights();
     if (selectedTile && selectedNum) {
+        let row = Math.floor(selectedTile.id / board_size);
+        let col = selectedTile.id % board_size;
+        let currentCandidates = get_candidates(board_grid_to_string(currentBoard));
+
+        selectedCellCandidateCount = currentCandidates[row][col].length;
         selectedTile.textContent = selectedNum.textContent;
+
         if (isCorrect(selectedTile)) {
+            workOutScore();
             selectedTile.classList.add("correct");
-            // Update the curernt status of Sudoku board
-            currentBoard[Math.floor(selectedTile.id / board_size)][selectedTile.id % board_size] =
-                selectedNum.textContent;
+            // Update the current status of Sudoku board
+            currentBoard[Math.floor(selectedTile.id / board_size)][selectedTile.id % board_size] = selectedNum.textContent;
+
             setTimeout(function() {
                 selectedTile.classList.remove("correct");
                 // Update selectedTile and selectedNum
@@ -352,22 +370,19 @@ function updateMove() {
             disableSelect = true;
             selectedTile.classList.add("incorrect");
             setTimeout(function() {
-                lives--;
-                displayLives(lives);
-                if (lives == 0) {
-                    endGame();
-                } else {
-                    disableSelect = false;
-                }
+                disableSelect = false;
+
                 selectedTile.classList.remove("incorrect");
                 selectedTile.classList.remove("selected");
                 selectedNum.classList.remove("selected");
                 selectedTile.textContent = "";
                 selectedTile = null;
                 selectedNum = null;
+                wrongInputsSinceLastMove++;
             }, 1000);
         }
-        bootstrap.Toast.getInstance(id("myToast")).hide();
+        let toast = bootstrap.Toast.getInstance(id("myToast"));
+        if (toast) toast.hide();
     }
 }
 
@@ -395,45 +410,61 @@ function clearPrevious() {
     selectedNum = null;
 }
 
-function displayLives(lives) {
-    if (lives == 0) {
-        id("lives").textContent = "Lives: 0";
-    } else {
-        id("lives").textContent = "Lives: " + "🖤".repeat(lives);
-    }
+function displayScore(score) {
+    id("lives").textContent = "Score: " + Math.round(score);
+}
+
+function workOutScore() {
+    let now = Date.now();
+    // Time taken in seconds, with a minimum of 0.1 seconds to prevent division by zero or very high scores for very fast moves
+    let timeTakenSeconds = Math.max(((now - lastMoveTime) / 1000), 0.1);
+    let wrongDivisor = wrongInputsSinceLastMove + 1;
+    let difficultyMultiplier =
+        id("difficulty-easy").checked ? 1 :
+        id("difficulty-medium").checked ? 2 :
+        id("difficulty-hard").checked ? 3 : 4;
+
+    let moveScore = scaleFactor * difficultyMultiplier * (selectedCellCandidateCount / timeTakenSeconds) / wrongDivisor;
+
+    score += moveScore;
+    displayScore(score);
+
+    lastMoveTime = now;
+    wrongInputsSinceLastMove = 0;
 }
 
 function display_tips() {
-    /*// Get and print candidates of each empty cell on the current board
-    candidates = get_candidates(board_grid_to_string(currentBoard));
-    console.log(board_grid_to_display_string(candidates));
-    qs(".toast-body").textContent = board_grid_to_display_string(candidates);
-    // Initialize bootstrap toast instance
-    var myToast = new bootstrap.Toast(id("myToast"), {
-        delay: 3000
-    });
-    myToast.show();*/
-    candidates = get_candidates(board_grid_to_string(currentBoard));
-
-    let tips = [];
-    
-    for (let r = 0; r < board_size; r++) {
-        for (let c = 0; c < board_size; c++) {
-            // Only check empty cells
-            if (currentBoard[r][c] === BLANK_CHAR || currentBoard[r][c] === ".") {
-                let possible = candidates[r][c];
-                // If only one candidate, it can be solved
-                if (possible.length === 1) {
-                    tips.push(
-                        "Row " + (r+1) + ", Col " + (c+1) + " → " + possible
-                    );
+    let currentState = board_grid_to_string(currentBoard);
+    candidates = get_candidates(currentState);
+    if (lastBoardState != currentState) {
+        tips = [];
+        for (let r = 0; r < board_size; r++) {
+            for (let c = 0; c < board_size; c++) {
+                // Only check empty cells
+                if (currentBoard[r][c] === BLANK_CHAR || currentBoard[r][c] === ".") {
+                    let possible = candidates[r][c];
+                    // If only one candidate, it can be solved
+                    if (possible.length === 1) {
+                        tips.push(
+                            "Row " + (r+1) + ", Col " + (c+1) + " → " + possible
+                        );
+                    }
                 }
             }
         }
-    }
 
-    // Take only the first 10 tips
-    tips = tips.slice(0, 10);
+    
+        // Shuffle tips randomly
+        for (let i = tips.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [tips[i], tips[j]] = [tips[j], tips[i]];
+        }
+
+        // Take 10 random tips
+        tips = tips.slice(0, 10);
+
+        lastBoardState = currentState;
+    }
 
     if (tips.length === 0) {
         qs(".toast-body").textContent = "No simple moves found.";
@@ -511,6 +542,7 @@ function restart_puzzle() {
 
 function pause() {
     disableSelect = true;
+    pauseStartTime = Date.now();
     if (timerType == "countdown") {
         pauseTimer();
     } else if (timerType == "stopwatch") {
@@ -522,6 +554,9 @@ function pause() {
 
 function resume() {
     disableSelect = false;
+    let pausedDuration = Date.now() - pauseStartTime;
+    lastMoveTime += pausedDuration;
+
     if (timerType == "countdown") {
         resumeTimer();
     } else if (timerType == "stopwatch") {

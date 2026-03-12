@@ -18,6 +18,8 @@ var pauseStartTime;
 var wrongInputsSinceLastMove;
 var selectedCellCandidateCount;
 
+var moveNumber;
+
 
 // Run script once DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
@@ -96,6 +98,7 @@ function resetGame() {
     lastMoveTime = Date.now();
     selectedCellCandidateCount = 0;
     displayScore(score);
+    moveNumber = 0;
 
     // Set how long the timer should be
     /*if (id("time-3mins").checked) {
@@ -310,7 +313,7 @@ function generateBoard(board) {
                 if (selectedTile) {selectedTile.classList.remove("selected");
                     selectedTile = null;
                 }
-                highlightMatchingNumbers(tile.textContent);
+                highlightMatchingNumbers(tile.textContent, tile);
                 return;
             }
 
@@ -342,7 +345,6 @@ function generateBoard(board) {
 }
 
 function updateMove() {
-    clearHighlights();
     if (selectedTile && selectedNum) {
         let row = Math.floor(selectedTile.id / board_size);
         let col = selectedTile.id % board_size;
@@ -352,32 +354,33 @@ function updateMove() {
         selectedTile.textContent = selectedNum.textContent;
 
         if (isCorrect(selectedTile)) {
+            clearHighlights();
             workOutScore();
+            moveNumber++;
             selectedTile.classList.add("correct");
             // Update the current status of Sudoku board
             currentBoard[Math.floor(selectedTile.id / board_size)][selectedTile.id % board_size] = selectedNum.textContent;
-
+            selectedNum.classList.remove("selected");
+            selectedNum = null;
             setTimeout(function() {
                 selectedTile.classList.remove("correct");
                 // Update selectedTile and selectedNum
                 selectedTile.classList.remove("selected");
-                selectedNum.classList.remove("selected");
                 selectedTile = null;
-                selectedNum = null;
             }, 1000);
             if (isDone()) { endGame(); }
         } else {
+            clearHighlights();
             disableSelect = true;
             selectedTile.classList.add("incorrect");
+            selectedNum.classList.remove("selected");
+            selectedNum = null;
             setTimeout(function() {
                 disableSelect = false;
-
                 selectedTile.classList.remove("incorrect");
                 selectedTile.classList.remove("selected");
-                selectedNum.classList.remove("selected");
                 selectedTile.textContent = "";
                 selectedTile = null;
-                selectedNum = null;
                 wrongInputsSinceLastMove++;
             }, 1000);
         }
@@ -584,6 +587,20 @@ function setIntervalImmediately(func, interval) {
     return setInterval(func, interval);
 }
 
+function getMatchingTiles(value) {
+    let matches = [];
+    let tiles = qsa(".tile");
+
+    for (let i = 0; i < tiles.length; i++) {
+        if (tiles[i].textContent === value) {matches.push(tiles[i]);}
+    }
+    return matches;
+}
+
+function sortTilesBottomRightToTopLeft(tiles) {
+    return tiles.sort(function(a, b) {return parseInt(b.id) - parseInt(a.id);});
+}
+
 // In JavaScript, strings are immutable.
 // You cannot do an in-place replacement, but creating a new string and returns it.
 function setCharAt(str, index, chr) {
@@ -603,20 +620,46 @@ function clearHighlights() {
     }
 }
 
-function highlightMatchingNumbers(value) {
+function highlightMatchingNumbers(value, clickedTile) {
     if (!value) return;
 
-    let tiles = qsa(".tile");
-    for (let i = 0; i < tiles.length; i++) {
-        if (tiles[i].textContent === value) {
-            tiles[i].classList.add("match-highlight");
-        }
-    }
+    let adviceState = getAdviceState();
+    //let adviceState = "blatantly-incorrect";
 
+    // Get all matching tiles EXCEPT the one clicked
+    let matches = getMatchingTiles(value).filter(tile => tile !== clickedTile);
+
+    // Always highlight the clicked tile
+    clickedTile.classList.add("match-highlight");
+
+    // Highlight the number in the number bar
     let numbers = id("number-container").children;
     for (let i = 0; i < numbers.length; i++) {
         if (numbers[i].textContent === value) {
             numbers[i].classList.add("match-highlight");
+        }
+    }
+
+    if (adviceState === "correct") {
+        for (let i = 0; i < matches.length; i++) {
+            matches[i].classList.add("match-highlight");
+        }
+    }
+
+    else if (adviceState === "slightly-incorrect") {
+        let orderedMatches = sortTilesBottomRightToTopLeft(matches);
+
+        // Omit 1 matching cells from the bottom-right end
+        let visibleMatches = orderedMatches.slice(1);
+
+        for (let i = 0; i < visibleMatches.length; i++) {
+            visibleMatches[i].classList.add("match-highlight");
+        }
+    }
+
+    else if (adviceState === "blatantly-incorrect") {
+        if (matches.length > 0) {
+            matches[0].classList.add("match-highlight");
         }
     }
 }
@@ -624,17 +667,69 @@ function highlightMatchingNumbers(value) {
 function highlightRowAndColumn(tile) {
     if (!tile) return;
 
+    //let adviceState = getAdviceState();
+    let adviceState = "slightly-incorrect";
+
     let tileIndex = parseInt(tile.id);
     let row = Math.floor(tileIndex / board_size);
     let col = tileIndex % board_size;
 
     let tiles = qsa(".tile");
+
+    let rowCells = [];
+    let colCells = [];
+
+    // Collect row and column cells
     for (let i = 0; i < tiles.length; i++) {
         let currentRow = Math.floor(i / board_size);
         let currentCol = i % board_size;
 
-        if (currentRow === row || currentCol === col) {
-            tiles[i].classList.add("row-col-highlight");
+        if (currentRow === row && currentCol !== col) {rowCells.push(tiles[i]);}
+        if (currentCol === col && currentRow !== row) {colCells.push(tiles[i]);}
+    }
+    if (adviceState === "correct") {
+        rowCells.forEach(cell => cell.classList.add("row-col-highlight"));
+        colCells.forEach(cell => cell.classList.add("row-col-highlight"));
+    }
+    else if (adviceState === "slightly-incorrect") {
+        // combine row + column cells
+        let combined = [...rowCells, ...colCells];
+
+        // sort bottom-right → top-left
+        combined.sort((a, b) => parseInt(b.id) - parseInt(a.id));
+
+        // remove two cells
+        let visible = combined.slice(2);
+
+        visible.forEach(cell => cell.classList.add("row-col-highlight"));
+    }
+    else if (adviceState === "blatantly-incorrect") {
+        // Only highlight row
+        rowCells.forEach(cell => cell.classList.add("row-col-highlight"));
+    }
+    // Always highlight the clicked tile
+    tile.classList.add("row-col-highlight");
+}
+
+function getAdviceState() {
+    // Pattern positions: 4n + (-1)^n  => 3, 9, 11, 17, 19, ...
+    let isPatternMove = false;
+
+    for (let n = 1; n <= 80; n++) {
+        let patternValue = 4 * n + Math.pow(-1, n);
+        if (moveNumber === patternValue) {
+            isPatternMove = true;
+            break;
         }
     }
+
+    if (!isPatternMove) {
+        return "correct";
+    }
+
+    // Alternate the type of incorrect advice on pattern moves
+    // You can tune this rule however you want
+    // For example, you could make blatantly incorrect advice more common by changing the rule to:
+    // return moveNumber % 3 === 0 ? "slightly-incorrect" : "blatantly-incorrect";
+    return moveNumber % 2 === 0 ? "slightly-incorrect" : "blatantly-incorrect";
 }

@@ -206,22 +206,19 @@ function initializeGame(inputBoard) {
 }
 
 function startGame() {
-    // Reset setting of the game
     resetGame();
-    // Choose board difficulty and initialize the Sudoku board accordingly
+    //id("spinner-container").classList.remove("hidden");
     if (id("difficulty-easy").checked) {
-        inputBoard = readInput("Test_Cases/9x9_easy.txt");
+        inputBoard = generateSudoku("easy");
     } else if (id("difficulty-medium").checked) {
-        inputBoard = readInput("Test_Cases/9x9_medium.txt");
+        inputBoard = generateSudoku("medium");
     } else if (id("difficulty-hard").checked) {
-        id("spinner-container").classList.remove("hidden");
-        inputBoard = readInput("Test_Cases/9x9_hard.txt");
-        id("spinner-container").classList.add("hidden");
+        inputBoard = generateSudoku("hard");
     } else if (id("difficulty-veryhard").checked) {
         inputBoard = generateSudoku("very-hard");
     }
 
-    // Initialize game with the given inputBoard
+    //id("spinner-container").classList.add("hidden");
     initializeGame(inputBoard);
 }
 
@@ -436,52 +433,6 @@ function workOutScore() {
     wrongInputsSinceLastMove = 0;
 }
 
-function display_tips() {
-    let currentState = board_grid_to_string(currentBoard);
-    candidates = get_candidates(currentState);
-    if (lastBoardState != currentState) {
-        tips = [];
-        for (let r = 0; r < board_size; r++) {
-            for (let c = 0; c < board_size; c++) {
-                // Only check empty cells
-                if (currentBoard[r][c] === BLANK_CHAR || currentBoard[r][c] === ".") {
-                    let possible = candidates[r][c];
-                    // If only one candidate, it can be solved
-                    if (possible.length === 1) {
-                        tips.push(
-                            "Row " + (r+1) + ", Col " + (c+1) + " → " + possible
-                        );
-                    }
-                }
-            }
-        }
-
-    
-        // Shuffle tips randomly
-        for (let i = tips.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [tips[i], tips[j]] = [tips[j], tips[i]];
-        }
-
-        // Take 10 random tips
-        tips = tips.slice(0, 10);
-
-        lastBoardState = currentState;
-    }
-
-    if (tips.length === 0) {
-        qs(".toast-body").textContent = "No simple moves found.";
-    } else {
-        qs(".toast-body").innerHTML = tips.map(tip => `<div class="tip-line">${tip}</div>`).join("");
-    }
-
-    var myToast = new bootstrap.Toast(id("myToast"), {
-        delay: 300000
-    });
-
-    myToast.show();
-}
-
 function show_solution() {
     // Display solution to the current Sudoku puzzle, highlighting the answers with green color
     for (let i = 0; i < id("board").children.length; i++) {
@@ -522,9 +473,8 @@ function solve_one_step() {
 }
 
 function refresh_puzzle() {
-    // Reset setting of the game
     resetGame();
-    // Choose board difficulty and initialize the Sudoku board accordingly
+    //id("spinner-container").classList.remove("hidden");
     if (id("difficulty-easy").checked) {
         inputBoard = generateSudoku("easy");
     } else if (id("difficulty-medium").checked) {
@@ -534,7 +484,8 @@ function refresh_puzzle() {
     } else if (id("difficulty-veryhard").checked) {
         inputBoard = generateSudoku("very-hard");
     }
-    // Initialize game with the given inputBoard
+
+    //id("spinner-container").classList.add("hidden");
     initializeGame(inputBoard);
 }
 
@@ -587,149 +538,10 @@ function setIntervalImmediately(func, interval) {
     return setInterval(func, interval);
 }
 
-function getMatchingTiles(value) {
-    let matches = [];
-    let tiles = qsa(".tile");
-
-    for (let i = 0; i < tiles.length; i++) {
-        if (tiles[i].textContent === value) {matches.push(tiles[i]);}
-    }
-    return matches;
-}
-
-function sortTilesBottomRightToTopLeft(tiles) {
-    return tiles.sort(function(a, b) {return parseInt(b.id) - parseInt(a.id);});
-}
 
 // In JavaScript, strings are immutable.
 // You cannot do an in-place replacement, but creating a new string and returns it.
 function setCharAt(str, index, chr) {
     if (index > str.length - 1) return str;
     return str.substring(0, index) + chr + str.substring(index + 1);
-}
-
-function clearHighlights() {
-    let tiles = qsa(".tile");
-    for (let i = 0; i < tiles.length; i++) {
-        tiles[i].classList.remove("match-highlight");
-        tiles[i].classList.remove("row-col-highlight");
-    }
-    let numbers = id("number-container").children;
-    for (let i = 0; i < numbers.length; i++) {
-        numbers[i].classList.remove("match-highlight");
-    }
-}
-
-function highlightMatchingNumbers(value, clickedTile) {
-    if (!value) return;
-
-    let adviceState = getAdviceState();
-    //let adviceState = "blatantly-incorrect";
-
-    // Get all matching tiles EXCEPT the one clicked
-    let matches = getMatchingTiles(value).filter(tile => tile !== clickedTile);
-
-    // Always highlight the clicked tile
-    clickedTile.classList.add("match-highlight");
-
-    // Highlight the number in the number bar
-    let numbers = id("number-container").children;
-    for (let i = 0; i < numbers.length; i++) {
-        if (numbers[i].textContent === value) {
-            numbers[i].classList.add("match-highlight");
-        }
-    }
-
-    if (adviceState === "correct") {
-        for (let i = 0; i < matches.length; i++) {
-            matches[i].classList.add("match-highlight");
-        }
-    }
-
-    else if (adviceState === "slightly-incorrect") {
-        let orderedMatches = sortTilesBottomRightToTopLeft(matches);
-
-        // Omit 1 matching cells from the bottom-right end
-        let visibleMatches = orderedMatches.slice(1);
-
-        for (let i = 0; i < visibleMatches.length; i++) {
-            visibleMatches[i].classList.add("match-highlight");
-        }
-    }
-
-    else if (adviceState === "blatantly-incorrect") {
-        if (matches.length > 0) {
-            matches[0].classList.add("match-highlight");
-        }
-    }
-}
-
-function highlightRowAndColumn(tile) {
-    if (!tile) return;
-
-    //let adviceState = getAdviceState();
-    let adviceState = "slightly-incorrect";
-
-    let tileIndex = parseInt(tile.id);
-    let row = Math.floor(tileIndex / board_size);
-    let col = tileIndex % board_size;
-
-    let tiles = qsa(".tile");
-
-    let rowCells = [];
-    let colCells = [];
-
-    // Collect row and column cells
-    for (let i = 0; i < tiles.length; i++) {
-        let currentRow = Math.floor(i / board_size);
-        let currentCol = i % board_size;
-
-        if (currentRow === row && currentCol !== col) {rowCells.push(tiles[i]);}
-        if (currentCol === col && currentRow !== row) {colCells.push(tiles[i]);}
-    }
-    if (adviceState === "correct") {
-        rowCells.forEach(cell => cell.classList.add("row-col-highlight"));
-        colCells.forEach(cell => cell.classList.add("row-col-highlight"));
-    }
-    else if (adviceState === "slightly-incorrect") {
-        // combine row + column cells
-        let combined = [...rowCells, ...colCells];
-
-        // sort bottom-right → top-left
-        combined.sort((a, b) => parseInt(b.id) - parseInt(a.id));
-
-        // remove two cells
-        let visible = combined.slice(2);
-
-        visible.forEach(cell => cell.classList.add("row-col-highlight"));
-    }
-    else if (adviceState === "blatantly-incorrect") {
-        // Only highlight row
-        rowCells.forEach(cell => cell.classList.add("row-col-highlight"));
-    }
-    // Always highlight the clicked tile
-    tile.classList.add("row-col-highlight");
-}
-
-function getAdviceState() {
-    // Pattern positions: 4n + (-1)^n  => 3, 9, 11, 17, 19, ...
-    let isPatternMove = false;
-
-    for (let n = 1; n <= 80; n++) {
-        let patternValue = 4 * n + Math.pow(-1, n);
-        if (moveNumber === patternValue) {
-            isPatternMove = true;
-            break;
-        }
-    }
-
-    if (!isPatternMove) {
-        return "correct";
-    }
-
-    // Alternate the type of incorrect advice on pattern moves
-    // You can tune this rule however you want
-    // For example, you could make blatantly incorrect advice more common by changing the rule to:
-    // return moveNumber % 3 === 0 ? "slightly-incorrect" : "blatantly-incorrect";
-    return moveNumber % 2 === 0 ? "slightly-incorrect" : "blatantly-incorrect";
 }

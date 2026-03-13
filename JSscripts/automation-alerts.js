@@ -129,6 +129,7 @@ function display_tips() {
             for (let c = 0; c < board_size; c++) {
                 // Only check empty cells
                 if (currentBoard[r][c] === BLANK_CHAR || currentBoard[r][c] === ".") {
+                    console.log(`Checking cell at Row ${r+1}, Col ${c+1} with candidates:`, candidates[r][c]);
                     let possible = candidates[r][c];
                     // If only one candidate, it can be solved
                     if (possible.length === 1) {
@@ -148,6 +149,7 @@ function display_tips() {
         }
 
         // Take 10 random tips
+        console.log("Generated tips:", tips);
         tips = tips.slice(0, 10);
 
         lastBoardState = currentState;

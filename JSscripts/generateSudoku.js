@@ -71,6 +71,70 @@ function hasGoodDistribution(board) {
     return true;
 }
 
+function isSafeStringBoard(boardArray, row, col, num) {
+    let value = num.toString();
+
+    // Check row
+    for (let c = 0; c < 9; c++) {
+        if (boardArray[row * 9 + c] === value) {
+            return false;
+        }
+    }
+
+    // Check column
+    for (let r = 0; r < 9; r++) {
+        if (boardArray[r * 9 + col] === value) {
+            return false;
+        }
+    }
+
+    // Check 3x3 box
+    let boxRowStart = Math.floor(row / 3) * 3;
+    let boxColStart = Math.floor(col / 3) * 3;
+
+    for (let r = boxRowStart; r < boxRowStart + 3; r++) {
+        for (let c = boxColStart; c < boxColStart + 3; c++) {
+            if (boardArray[r * 9 + c] === value) {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+function countSolutions(board, limit = 2) {
+    let boardArray = board.split("");
+    let solutionCount = 0;
+
+    function solve() {
+        if (solutionCount >= limit) {
+            return;
+        }
+
+        let emptyIndex = boardArray.indexOf(".");
+
+        if (emptyIndex === -1) {
+            solutionCount++;
+            return;
+        }
+
+        let row = Math.floor(emptyIndex / 9);
+        let col = emptyIndex % 9;
+
+        for (let num = 1; num <= 9; num++) {
+            if (isSafeStringBoard(boardArray, row, col, num)) {
+                boardArray[emptyIndex] = num.toString();
+                solve();
+                boardArray[emptyIndex] = ".";
+            }
+        }
+    }
+
+    solve();
+    return solutionCount;
+}
+
 function generateSudoku(difficulty) {
     let difficultyLabel = difficulty;
     /*
@@ -85,37 +149,29 @@ function generateSudoku(difficulty) {
      *
      * 'difficulty' must be a number between 17 and 81 inclusive.
      * If it's outside of that range, 'difficulty' will be set to the closest bound,
-     * e.g., 0 - > 17, and 100 - > 81.
+     * e.g., 0 -> 17, and 100 -> 81.
      */
 
-    // If 'difficulty' is a string or undefined, convert it to a number or
-    // default it to "easy" if undefined.
     if (typeof difficulty === "string" || typeof difficulty === "undefined") {
         difficulty = DIFFICULTY[difficulty] || DIFFICULTY.easy;
     }
 
-    // Force difficulty between 17 and 81 inclusive
     difficulty = _force_range(difficulty, NUM_SQUARES + 1, MIN_GIVENS);
 
-    // Get a set of squares and all possible candidates for each square
     var blank_board = "";
     for (var i = 0; i < NUM_SQUARES; ++i) {
-        blank_board += '.';
+        blank_board += ".";
     }
     var candidates = _get_candidates_map(blank_board);
 
-    // For each item in a shuffled list of squares
     var shuffled_squares = _shuffle(SQUARES);
     for (var s in shuffled_squares) {
         var square = shuffled_squares[s];
 
-        // If an assignment of a random choice causes a contradiction,
-        // give up and try again!
         var rand_candidate_idx = _rand_range(candidates[square].length);
         var rand_candidate = candidates[square][rand_candidate_idx];
         if (!_assign(candidates, square, rand_candidate)) { break; }
 
-        // Make a list of all squares with one single candidate
         var single_candidates = [];
         for (var s in SQUARES) {
             var square = SQUARES[s];
@@ -124,8 +180,6 @@ function generateSudoku(difficulty) {
             }
         }
 
-        // If the number of squares with one single candidate is >= 'difficulty', and
-        // the unique candidate count is at least 8, return the puzzle!
         if (single_candidates.length >= difficulty && _strip_dups(single_candidates).length >= 8) {
             var board = "";
             var givens_idxs = [];
@@ -139,8 +193,6 @@ function generateSudoku(difficulty) {
                 }
             }
 
-            // If the number of squares with one single candidate is > 'difficulty',
-            // remove some random givens until we're down to exactly 'difficulty'
             var nr_givens = givens_idxs.length;
             if (nr_givens > difficulty) {
                 givens_idxs = _shuffle(givens_idxs);
@@ -150,30 +202,26 @@ function generateSudoku(difficulty) {
                 }
             }
 
-            // Double check board is solvable and well-formed
-            // Double check board is solvable and well-formed
-            let solvable = false;
+            let solutionCount = 0;
 
-            try {solvable = solveSudoku(board);
+            try {
+                solutionCount = countSolutions(board, 2);
             } catch (error) {
-                console.log("Solver failed on generated board:", error);
-                solvable = false;
+                console.log("Solution counting failed:", error);
+                solutionCount = 0;
             }
 
-            if (solvable && isValidGeneratedBoard(board, difficultyLabel) && hasGoodDistribution(board)) {
-                console.log("Generated board:", board);
-                console.log("Board length:", board.length);
-                console.log("Difficulty:", difficultyLabel);
-
+            if (
+                solutionCount === 1 &&
+                isValidGeneratedBoard(board, difficultyLabel) &&
+                hasGoodDistribution(board)
+            ) {
                 const puzzleID = generatePuzzleID(board, difficultyLabel);
                 localStorage.setItem("currentPuzzleID", puzzleID);
-                console.log("Puzzle ID:", puzzleID);
 
                 return board;
             }
         }
     }
-
-    // Give up and try a new puzzle
     return generateSudoku(difficultyLabel);
 }

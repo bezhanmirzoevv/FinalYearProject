@@ -316,7 +316,7 @@ function _get_candidates_map(board) {
 
     // Assure a valid board
     var report = validate_board(board);
-    if (!report) { throw report; }
+    if (report !== true) { throw report; }
 
     var candidate_map = {};
     var squares_values_map = _get_square_vals_map(board);

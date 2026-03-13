@@ -39,8 +39,24 @@
                 </div>
             </div>
             <div class="github">
-                <!-- Questionaire -->
-                <a class="questionnaire-btn" href="https://cityunilondon.eu.qualtrics.com/jfe/form/SV_9MmMCDK2qczGUMS" target="_blank" aria-label="Questionnaire">Please fill out the questionnaire</a>
+                <!-- Questionnaire -->
+                <a class="questionnaire-btn" href="https://cityunilondon.eu.qualtrics.com/jfe/form/SV_9MmMCDK2qczGUMS" target="_blank" aria-label="Questionnaire">
+                    Please fill out the questionnaire
+                </a>
+
+                <!-- Username login area -->
+                <div style="margin-top: 15px; text-align: center;">
+                    <input type="text" id="username-input" placeholder="Enter username">
+
+                    <!-- Hidden password field -->
+                    <input type="password" id="staff-password-input" placeholder="Enter password" class="hidden">
+
+                    <button type="button" id="username-submit-btn"
+                        style="padding: 8px 14px; font-size: 16px; margin-left: 8px; border-radius: 5px; border: none; cursor: pointer;">
+                        Submit
+                    </button>
+                </div>
+                <p id="login-status" style="margin-top:10px; font-size:16px;"></p>
             </div>
             <!--Waves Container-->
             <div>
@@ -226,6 +242,7 @@
     <script src="./JSscripts/countdown-timer.js"></script>
     <script src="./JSscripts/progress-bar.js"></script>
     <script src="./JSscripts/app.js"></script>
+    <script src="./JSscripts/login.js"></script>
 </body>
 
 </html>

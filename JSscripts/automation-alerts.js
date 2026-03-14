@@ -123,24 +123,58 @@ function getAdviceState() {
 function display_tips() {
     let currentState = board_grid_to_string(currentBoard);
     candidates = get_candidates(currentState);
+
     if (lastBoardState != currentState) {
+
+        //let adviceState = getAdviceState();
+        let adviceState = "slightly-incorrect"
         tips = [];
-        for (let r = 0; r < board_size; r++) {
-            for (let c = 0; c < board_size; c++) {
-                // Only check empty cells
-                if (currentBoard[r][c] === BLANK_CHAR || currentBoard[r][c] === ".") {
-                    console.log(`Checking cell at Row ${r+1}, Col ${c+1} with candidates:`, candidates[r][c]);
-                    let possible = candidates[r][c];
-                    // If only one candidate, it can be solved
-                    if (possible.length === 1) {
-                        tips.push(
-                            "Row " + (r+1) + ", Col " + (c+1) + " → " + possible
-                        );
+
+        if (adviceState === "correct" || adviceState === "slightly-incorrect"){
+            for (let r = 0; r < board_size; r++) {
+                for (let c = 0; c < board_size; c++) {
+                    // Only check empty cells
+                    if (currentBoard[r][c] === BLANK_CHAR || currentBoard[r][c] === ".") {
+                        let possible = candidates[r][c];
+                        // If only one candidate, it can be solved
+                        if (possible.length === 1) {
+                            if (adviceState === "slightly-incorrect"){
+                                // Generate a random incorrect value
+                                let wrongValue;
+                                do {
+                                    wrongValue = Math.floor(Math.random() * 9) + 1;
+                                } while (wrongValue.toString() === possible[0]);
+                                tips.push("Col " + (c+1) + ", Row " + (r+1) + " → " + wrongValue);
+                            }else{
+                                tips.push("Col " + (c+1) + ", Row " + (r+1) + " → " + possible);
+                            }
+                        }
                     }
                 }
             }
-        }
+   
+        }else if (adviceState === "blatantly-incorrect"){
+            for (let i = 0; i < 10; i++) {
+                let randomRow, randomCol, wrongValue;
 
+                // Keep picking until we land on a filled cell
+                do {
+                    randomRow = Math.floor(Math.random() * board_size);
+                    randomCol = Math.floor(Math.random() * board_size);
+                } while (currentBoard[randomRow][randomCol] === BLANK_CHAR || currentBoard[randomRow][randomCol] === ".");
+
+                let correctValue = currentBoard[randomRow][randomCol].toString();
+
+                // Pick a wrong number that is not the real value in that filled cell
+                do {
+                    wrongValue = Math.floor(Math.random() * 9) + 1;
+                } while (wrongValue.toString() === correctValue);
+
+                tips.push(
+                    "Col " + (randomCol + 1) + ", Row " + (randomRow + 1) + " → " + wrongValue
+                );
+            }
+        }
     
         // Shuffle tips randomly
         for (let i = tips.length - 1; i > 0; i--) {
@@ -149,7 +183,6 @@ function display_tips() {
         }
 
         // Take 10 random tips
-        console.log("Generated tips:", tips);
         tips = tips.slice(0, 10);
 
         lastBoardState = currentState;

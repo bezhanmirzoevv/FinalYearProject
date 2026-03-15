@@ -23,6 +23,11 @@ var moveNumber;
 
 // Run script once DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
+    // Clear local storage to ensure a fresh start for each session
+    localStorage.removeItem("participantId");
+    localStorage.removeItem("participantUsername");
+    localStorage.removeItem("isStaff");
+
     // Initialize Sudoku library
     initializeSudokuLib();
     // Execute startGame function when start button is clicked
@@ -206,6 +211,13 @@ function initializeGame(inputBoard) {
 }
 
 function startGame() {
+    // Check if participant is logged in before starting the game
+    if (!localStorage.getItem("participantId")) {
+        document.getElementById("login-status").textContent = "Please sign in to start the game.";
+        document.getElementById("login-status").style.color = "red";
+        return;
+    }
+
     resetGame();
     //id("spinner-container").classList.remove("hidden");
     if (id("difficulty-easy").checked) {
@@ -302,7 +314,6 @@ function generateBoard(board) {
         }
 
         tile.addEventListener("click", function() {
-            console.log("Advice State:", getAdviceState());
             clearHighlights();
             if (disableSelect) return;
 

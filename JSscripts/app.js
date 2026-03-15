@@ -302,6 +302,7 @@ function generateBoard(board) {
         }
 
         tile.addEventListener("click", function() {
+            console.log("Advice State:", getAdviceState());
             clearHighlights();
             if (disableSelect) return;
 

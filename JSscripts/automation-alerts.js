@@ -103,33 +103,68 @@ function highlightRowAndColumn(tile) {
 }
 
 function getAdviceState() {
-    let isPatternMove = false;
+    let s = 1; // Thinning factor (0 = no incorrect advice, 1 = all incorrect advice)
+    let a = 0.5; // Blatancy factor (0 = all incorrect advice is slightly incorrect, 1 = all incorrect advice is blatantly incorrect)
 
+    // Clamp values
+    s = Math.max(0, Math.min(1, s));
+    a = Math.max(0, Math.min(1, a));
+
+    let patternIndex = -1;  // -1 means not part of pattern
+
+    // Find if this move matches the pattern and which occurrence it is
     for (let n = 1; n <= 80; n++) {
+        // Pattern: 4n + (-1)^n → 3, 5, 11, 13, 19, 21, ...
         let patternValue = 4 * n + Math.pow(-1, n);
+
         if (moveNumber === patternValue) {
-            isPatternMove = true;
+            patternIndex = n;
             break;
         }
+        if (patternValue > moveNumber) break;
     }
 
-    if (!isPatternMove) {
+    // Not part of pattern → correct advice OR s = 0 → all advice is correct
+    if (patternIndex === -1 || s === 0) {
         return "correct";
     }
 
-    return moveNumber % 2 === 0 ? "slightly-incorrect" : "blatantly-incorrect";
+    // Determine thinning interval
+    let thinningInterval = Math.round(1 / s);
+
+    // Only keep every thinningInterval-th pattern event
+    if (patternIndex % thinningInterval !== 0) {
+        return "correct";
+    }
+
+    // This move is incorrect advice
+    let incorrectIndex = patternIndex / thinningInterval;
+
+    // If a = 0 → always slightly incorrect
+    if (a === 0) {
+        return "slightly-incorrect";
+    }
+
+    let blatantInterval = Math.round(1 / a);
+
+    if (incorrectIndex % blatantInterval === 0) {
+        return "blatantly-incorrect";
+    }
+
+    return "slightly-incorrect";
 }
 
 function display_tips() {
     let currentState = board_grid_to_string(currentBoard);
     candidates = get_candidates(currentState);
+    console.log("Current board state:", currentState);
+    console.log("Candidates for each cell:", candidates);
     if (lastBoardState != currentState) {
         tips = [];
         for (let r = 0; r < board_size; r++) {
             for (let c = 0; c < board_size; c++) {
                 // Only check empty cells
                 if (currentBoard[r][c] === BLANK_CHAR || currentBoard[r][c] === ".") {
-                    console.log(`Checking cell at Row ${r+1}, Col ${c+1} with candidates:`, candidates[r][c]);
                     let possible = candidates[r][c];
                     // If only one candidate, it can be solved
                     if (possible.length === 1) {
@@ -149,7 +184,6 @@ function display_tips() {
         }
 
         // Take 10 random tips
-        console.log("Generated tips:", tips);
         tips = tips.slice(0, 10);
 
         lastBoardState = currentState;

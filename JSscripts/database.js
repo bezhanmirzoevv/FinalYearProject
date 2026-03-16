@@ -65,6 +65,29 @@ async function createPuzzleAttempt(sessionId, puzzleId, puzzleOrder) {
     return data;
 }
 
+async function updatePuzzleAttemptProgress({
+    puzzleAttemptId,
+    score,
+    totalTimeSeconds
+}) {
+    const { data, error } = await window.supabaseClient
+        .from("puzzle_attempts")
+        .update({
+            score: score,
+            total_time_seconds: totalTimeSeconds
+        })
+        .eq("id", puzzleAttemptId)
+        .select("id, score, total_time_seconds")
+        .single();
+
+    if (error) {
+        console.error("Error updating puzzle attempt progress:", error);
+        throw error;
+    }
+
+    return data;
+}
+
 async function logMove({
     puzzleAttemptId,
     moveNumber,

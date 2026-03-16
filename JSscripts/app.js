@@ -380,6 +380,7 @@ async function handleCorrectMove(moveContext) {
 
     const timeTakenSeconds = getTimeTakenSeconds();
     const cellIndex = getDisplayCellIndex(moveContext.index);
+    const totalTimeSeconds = Math.floor(elapsedTime / 1000);
 
     workOutScore();
     moveNumber++;
@@ -389,6 +390,11 @@ async function handleCorrectMove(moveContext) {
     currentBoard[moveContext.row][moveContext.col] = selectedNum.textContent;
 
     await logCorrectMoveToDatabase(cellIndex, timeTakenSeconds);
+    await updatePuzzleAttemptProgress({ 
+        puzzleAttemptId: parseInt(localStorage.getItem("puzzleAttemptId"), 10),
+        score: score,
+        totalTimeSeconds: totalTimeSeconds
+    });
 
     lastMoveTime = Date.now();
     wrongInputsSinceLastMove = 0;
@@ -401,6 +407,8 @@ async function handleCorrectMove(moveContext) {
         endGame();
     }
 }
+
+
 
 async function logCorrectMoveToDatabase(cellIndex, timeTakenSeconds) {
     try {

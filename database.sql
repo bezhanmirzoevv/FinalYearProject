@@ -86,7 +86,8 @@ create table move_logs (
 -- 6. incorrect_inputs
 create table incorrect_inputs (
     id bigint generated always as identity primary key,
-    move_log_id bigint not null references move_logs(id) on delete cascade,
+    puzzle_attempt_id bigint not null references puzzle_attempts(id) on delete cascade,
+    move_number integer not null check (move_number > 0),
     attempt_number integer not null check (attempt_number > 0),
     cell_index integer not null check (
         cell_index between 11 and 99
@@ -100,7 +101,7 @@ create table incorrect_inputs (
     matched_row_col_highlighting boolean not null default false,
     created_at timestamptz not null default now(),
     check (input_value <> correct_value),
-    unique (move_log_id, attempt_number)
+    unique (puzzle_attempt_id, move_number, attempt_number)
 );
 
 -- Helpful indexes
@@ -119,8 +120,14 @@ create index idx_move_logs_advice_state
 create index idx_move_logs_cell_index
     on move_logs(cell_index);
 
-create index idx_incorrect_inputs_move_log_id
-    on incorrect_inputs(move_log_id);
+create index idx_incorrect_inputs_puzzle_attempt_id
+    on incorrect_inputs(puzzle_attempt_id);
+
+create index idx_incorrect_inputs_puzzle_attempt_move
+    on incorrect_inputs(puzzle_attempt_id, move_number);
+
+create index idx_incorrect_inputs_move_number
+    on incorrect_inputs(move_number);
 
 create index idx_incorrect_inputs_cell_index
     on incorrect_inputs(cell_index);
@@ -128,74 +135,8 @@ create index idx_incorrect_inputs_cell_index
 create index idx_incorrect_inputs_matched_tip
     on incorrect_inputs(matched_tip);
 
--- Optional trigger: keep incorrect_inputs_count in sync automatically
-create or replace function sync_incorrect_inputs_count()
-returns trigger
-language plpgsql
-as $$
-begin
-    if tg_op = 'INSERT' then
-        update move_logs
-        set incorrect_inputs_count = (
-            select count(*)
-            from incorrect_inputs
-            where move_log_id = new.move_log_id
-        )
-        where id = new.move_log_id;
-        return new;
-    elsif tg_op = 'DELETE' then
-        update move_logs
-        set incorrect_inputs_count = (
-            select count(*)
-            from incorrect_inputs
-            where move_log_id = old.move_log_id
-        )
-        where id = old.move_log_id;
-        return old;
-    elsif tg_op = 'UPDATE' then
-        if new.move_log_id <> old.move_log_id then
-            update move_logs
-            set incorrect_inputs_count = (
-                select count(*)
-                from incorrect_inputs
-                where move_log_id = old.move_log_id
-            )
-            where id = old.move_log_id;
-
-            update move_logs
-            set incorrect_inputs_count = (
-                select count(*)
-                from incorrect_inputs
-                where move_log_id = new.move_log_id
-            )
-            where id = new.move_log_id;
-        else
-            update move_logs
-            set incorrect_inputs_count = (
-                select count(*)
-                from incorrect_inputs
-                where move_log_id = new.move_log_id
-            )
-            where id = new.move_log_id;
-        end if;
-        return new;
-    end if;
-
-    return null;
-end;
-$$;
-
-create trigger trg_sync_incorrect_inputs_count_insert
-after insert on incorrect_inputs
-for each row
-execute function sync_incorrect_inputs_count();
-
-create trigger trg_sync_incorrect_inputs_count_delete
-after delete on incorrect_inputs
-for each row
-execute function sync_incorrect_inputs_count();
-
-create trigger trg_sync_incorrect_inputs_count_update
-after update on incorrect_inputs
-for each row
-execute function sync_incorrect_inputs_count();
+-- Insert initial staff user
+insert into staff (username, password_hash) values (
+    'staff',
+    '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9'
+);

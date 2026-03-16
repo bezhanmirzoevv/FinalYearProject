@@ -159,8 +159,8 @@ function display_tips() {
     candidates = get_candidates(currentState);
     if (lastBoardState != currentState) {
 
-        //let adviceState = getAdviceState();
-        let adviceState = "slightly-incorrect"
+        let adviceState = getAdviceState();
+        //let adviceState = "slightly-incorrect"
         tips = [];
 
         if (adviceState === "correct" || adviceState === "slightly-incorrect"){
@@ -177,9 +177,9 @@ function display_tips() {
                                 do {
                                     wrongValue = Math.floor(Math.random() * 9) + 1;
                                 } while (wrongValue.toString() === possible[0]);
-                                tips.push("Col " + (c+1) + ", Row " + (r+1) + " → " + wrongValue);
+                                tips.push("Row " + (r+1) + ", Col " + (c+1) + " → " + wrongValue);
                             }else{
-                                tips.push("Col " + (c+1) + ", Row " + (r+1) + " → " + possible);
+                                tips.push("Row " + (r+1) + ", Col " + (c+1) + " → " + possible);
                             }
                         }
                     }

@@ -17,8 +17,9 @@ var lastMoveTime;
 var pauseStartTime;
 var wrongInputsSinceLastMove;
 var selectedCellCandidateCount;
-
+var puzzleOrder = 0;
 var moveNumber;
+var lastMoveTime = null;
 
 
 // Run script once DOM is loaded
@@ -27,6 +28,9 @@ document.addEventListener('DOMContentLoaded', function() {
     localStorage.removeItem("participantId");
     localStorage.removeItem("participantUsername");
     localStorage.removeItem("isStaff");
+    localStorage.removeItem("experimentSessionId");
+    localStorage.removeItem("puzzleAttemptId");
+
 
     // Initialize Sudoku library
     initializeSudokuLib();
@@ -210,7 +214,7 @@ function initializeGame(inputBoard) {
     id("game-container").style.visibility = "visible";
 }
 
-function startGame() {
+async function startGame() {
     // Check if participant is logged in before starting the game
     if (!localStorage.getItem("participantId")) {
         document.getElementById("login-status").textContent = "Please sign in to start the game.";
@@ -232,6 +236,27 @@ function startGame() {
 
     //id("spinner-container").classList.add("hidden");
     initializeGame(inputBoard);
+    lastMoveTime = Date.now();
+
+    try {
+        const experimentSessionId = localStorage.getItem("experimentSessionId");
+
+        if (!experimentSessionId) {
+            console.error("No experiment session found.");
+            return;
+        }
+
+        puzzleOrder++;
+        const puzzleAttempt = await createPuzzleAttempt(parseInt(experimentSessionId, 10), localStorage.getItem("currentPuzzleID"), puzzleOrder);
+        localStorage.setItem("puzzleAttemptId", puzzleAttempt.id);
+        localStorage.removeItem("lastMoveLogId");
+
+        wrongInputsSinceLastMove = 0;
+        lastMoveTime = Date.now();
+
+        console.log("Puzzle attempt created:", puzzleAttempt);
+    
+    } catch (err) {console.error("Failed to create puzzle attempt:", err);}
 }
 
 function endGame() {
@@ -353,7 +378,8 @@ function generateBoard(board) {
     }
 }
 
-function updateMove() {
+async function updateMove() {
+    console.log(selectedTile.id);
     if (selectedTile && selectedNum) {
         let row = Math.floor(selectedTile.id / board_size);
         let col = selectedTile.id % board_size;
@@ -364,20 +390,57 @@ function updateMove() {
 
         if (isCorrect(selectedTile)) {
             clearHighlights();
+
+            let timeTakenSeconds = Math.max((Date.now() - lastMoveTime) / 1000, 0.1);
+            let index = Number(selectedTile.id);
+            let row = Math.floor(index / board_size) + 1;
+            let col = (index % board_size) + 1;
+            let cellIndex = row * 10 + col;
+
             workOutScore();
             moveNumber++;
+
             selectedTile.classList.add("correct");
-            // Update the current status of Sudoku board
+
             currentBoard[Math.floor(selectedTile.id / board_size)][selectedTile.id % board_size] = selectedNum.textContent;
+
+            try {
+                const puzzleAttemptId = localStorage.getItem("puzzleAttemptId");
+
+                if (puzzleAttemptId) {
+                    const moveLog = await logMove({
+                        puzzleAttemptId: parseInt(puzzleAttemptId, 10),
+                        moveNumber: moveNumber,
+                        cellIndex: cellIndex,
+                        adviceState: getAdviceState(),
+                        tips: tips && tips.length > 0 ? tips : null,
+                        incorrectInputsCount: wrongInputsSinceLastMove,
+                        timeTakenSeconds: timeTakenSeconds,
+                        finalInput: selectedTile.textContent
+                    });
+
+                    localStorage.setItem("lastMoveLogId", moveLog.id);
+                    console.log("Move logged:", moveLog);
+                }
+            } catch (err) {
+                console.error("Failed to log move:", err);
+            }
+
+            lastMoveTime = Date.now();
+            wrongInputsSinceLastMove = 0;
+
             selectedNum.classList.remove("selected");
             selectedNum = null;
+
             setTimeout(function() {
                 selectedTile.classList.remove("correct");
-                // Update selectedTile and selectedNum
                 selectedTile.classList.remove("selected");
                 selectedTile = null;
             }, 1000);
-            if (isDone()) { endGame(); }
+
+            if (isDone()) {
+                endGame();
+            }
         } else {
             clearHighlights();
             disableSelect = true;
@@ -442,7 +505,6 @@ function workOutScore() {
     displayScore(score);
 
     lastMoveTime = now;
-    wrongInputsSinceLastMove = 0;
 }
 
 function show_solution() {

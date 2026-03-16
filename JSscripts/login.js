@@ -12,33 +12,6 @@ document.addEventListener("DOMContentLoaded", function () {
         return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
     }
 
-    async function getOrCreateParticipant(username) {
-        const { data: existingParticipant, error: selectError } = await window.supabaseClient
-            .from("participants")
-            .select("id, username")
-            .eq("username", username)
-            .maybeSingle();
-
-        if (selectError) {
-            throw selectError;
-        }
-
-        if (existingParticipant) {
-            return existingParticipant;
-        }
-
-        const { data: newParticipant, error: insertError } = await window.supabaseClient
-            .from("participants")
-            .insert([{ username: username }])
-            .select("id, username")
-            .single();
-
-        if (insertError) {
-            throw insertError;
-        }
-
-        return newParticipant;
-    }
 
     usernameSubmitBtn.addEventListener("click", async function () {
         const username = usernameInput.value.trim().toLowerCase();
@@ -99,10 +72,13 @@ document.addEventListener("DOMContentLoaded", function () {
         } else {
             try {
                 const participant = await getOrCreateParticipant(username);
+                const session = await createExperimentSession(participant.id);
 
                 localStorage.setItem("isStaff", "false");
                 localStorage.setItem("participantId", participant.id);
                 localStorage.setItem("participantUsername", participant.username);
+                localStorage.setItem("participantLoggedIn", "true");
+                localStorage.setItem("experimentSessionId", session.id);
 
                 loginStatus.textContent = "Participant login successful.";
                 loginStatus.style.color = "white";
@@ -110,7 +86,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 usernameInput.disabled = true;
                 passwordInput.disabled = true;
                 usernameSubmitBtn.disabled = true;
-                
+
+                console.log("Participant:", participant);
+                console.log("Experiment session:", session);
             } catch (err) {
                 console.error("Participant login error:", err);
                 loginStatus.textContent = "Participant login failed.";

@@ -1,0 +1,105 @@
+async function getOrCreateParticipant(username) {
+        const { data: existingParticipant, error: selectError } = await window.supabaseClient
+            .from("participants")
+            .select("id, username")
+            .eq("username", username)
+            .maybeSingle();
+
+        if (selectError) {
+            throw selectError;
+        }
+
+        if (existingParticipant) {
+            return existingParticipant;
+        }
+
+        const { data: newParticipant, error: insertError } = await window.supabaseClient
+            .from("participants")
+            .insert([{ username: username }])
+            .select("id, username")
+            .single();
+
+        if (insertError) {
+            throw insertError;
+        }
+
+        return newParticipant;
+    }
+
+async function createExperimentSession(participantId) {
+        const { data, error } = await window.supabaseClient
+            .from("experiment_sessions")
+            .insert([{
+                participant_id: participantId,
+                experiment_date: new Date().toISOString().slice(0, 10),
+                scaling_factor: 1.0,
+                blatancy_factor: 0.5,
+                started_at: new Date().toISOString()
+            }])
+            .select("id, participant_id, started_at")
+            .single();
+
+        if (error) {
+            throw error;
+        }
+
+        return data;
+    }
+
+async function createPuzzleAttempt(sessionId, puzzleId, puzzleOrder) {
+    const { data, error } = await window.supabaseClient
+        .from("puzzle_attempts")
+        .insert([{
+            session_id: sessionId,
+            puzzle_id: puzzleId,
+            puzzle_order: puzzleOrder,
+            started_at: new Date().toISOString()
+        }])
+        .select("id, session_id, puzzle_order, started_at")
+        .single();
+
+    if (error) {
+        throw error;
+    }
+
+    return data;
+}
+
+async function logMove({
+    puzzleAttemptId,
+    moveNumber,
+    cellIndex,
+    adviceState,
+    tips,
+    incorrectInputsCount,
+    timeTakenSeconds,
+    finalInput
+}) {
+    const adviceMap = {
+        "correct": "correct",
+        "slightly-incorrect": "slightly_incorrect",
+        "blatantly-incorrect": "blatantly_incorrect"
+    };
+
+    const { data, error } = await window.supabaseClient
+        .from("move_logs")
+        .insert([{
+            puzzle_attempt_id: puzzleAttemptId,
+            move_number: moveNumber,
+            cell_index: cellIndex,
+            advice_state: adviceMap[adviceState] || "correct",
+            tips: tips ?? null,
+            incorrect_inputs_count: incorrectInputsCount ?? 0,
+            time_taken_seconds: timeTakenSeconds ?? 0,
+            final_input: finalInput ? parseInt(finalInput, 10) : null,
+            created_at: new Date().toISOString()
+        }])
+        .select("id, move_number, cell_index")
+        .single();
+
+    if (error) {
+        throw error;
+    }
+
+    return data;
+}

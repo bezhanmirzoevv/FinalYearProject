@@ -103,3 +103,39 @@ async function logMove({
 
     return data;
 }
+
+async function logIncorrectInput({
+    puzzleAttemptId,
+    moveNumber,
+    attemptNumber,
+    cellIndex,
+    inputValue,
+    correctValue,
+    matchedTip,
+    matchedMatchingNumbers,
+    matchedRowColGrid
+}) {
+    const { data, error } = await window.supabaseClient
+        .from("incorrect_inputs")
+        .insert([{
+            puzzle_attempt_id: puzzleAttemptId,
+            move_number: moveNumber,
+            attempt_number: attemptNumber,
+            cell_index: cellIndex,
+            input_value: inputValue,
+            correct_value: correctValue,
+            matched_tip: matchedTip ?? false,
+            matched_matching_numbers: matchedMatchingNumbers ?? false,
+            matched_row_col_grid: matchedRowColGrid ?? [],
+            created_at: new Date().toISOString()
+        }])
+        .select("id, move_number, attempt_number, cell_index")
+        .single();
+
+    if (error) {
+        console.error("Error logging incorrect input:", error);
+        throw error;
+    }
+
+    return data;
+}

@@ -98,7 +98,7 @@ create table incorrect_inputs (
     correct_value integer not null check (correct_value between 1 and 9),
     matched_tip boolean not null default false,
     matched_matching_numbers boolean not null default false,
-    matched_row_col_highlighting boolean not null default false,
+    matched_row_col_grid text[] default '{}'::text[] check (matched_row_col_grid <@ array['row','column','grid']),
     created_at timestamptz not null default now(),
     check (input_value <> correct_value),
     unique (puzzle_attempt_id, move_number, attempt_number)

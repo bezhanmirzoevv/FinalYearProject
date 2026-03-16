@@ -19,6 +19,8 @@ var wrongInputsSinceLastMove;
 var selectedCellCandidateCount;
 var puzzleOrder = 0;
 var moveNumber;
+var lastHighlightedNumberValue;
+let clickedForTips = false;
 
 
 // Run script once DOM is loaded
@@ -102,6 +104,7 @@ function resetGame() {
     selectedCellCandidateCount = 0;
     displayScore(score);
     moveNumber = 0;
+    lastHighlightedNumberValue = null;
 
     // Set how long the timer should be
     /*if (id("time-3mins").checked) {
@@ -323,6 +326,7 @@ function generateBoard(board) {
                 if (selectedTile) {selectedTile.classList.remove("selected");
                     selectedTile = null;
                 }
+                lastHighlightedNumberValue = tile.textContent;
                 highlightMatchingNumbers(tile.textContent, tile);
                 return;
             }
@@ -365,7 +369,7 @@ async function updateMove() {
     if (isCorrect(selectedTile)) {
         await handleCorrectMove(moveContext);
     } else {
-        handleIncorrectMove();
+        await handleIncorrectMove(moveContext);
     }
 
     hideToastIfOpen();
@@ -388,6 +392,7 @@ async function handleCorrectMove(moveContext) {
 
     lastMoveTime = Date.now();
     wrongInputsSinceLastMove = 0;
+    clickedForTips = false;
 
     clearSelectedNumber();
     clearSelectedTileAfterDelay("correct");
@@ -407,7 +412,7 @@ async function logCorrectMoveToDatabase(cellIndex, timeTakenSeconds) {
             moveNumber: moveNumber,
             cellIndex: cellIndex,
             adviceState: getAdviceState(),
-            tips: tips && tips.length > 0 ? tips : null,
+            tips: clickedForTips && tips && tips.length > 0 ? tips : null,
             incorrectInputsCount: wrongInputsSinceLastMove,
             timeTakenSeconds: timeTakenSeconds,
             finalInput: selectedTile.textContent
@@ -420,21 +425,133 @@ async function logCorrectMoveToDatabase(cellIndex, timeTakenSeconds) {
     }
 }
 
-function handleIncorrectMove() {
+async function handleIncorrectMove(moveContext) {
     clearHighlights();
     disableSelect = true;
 
     selectedTile.classList.add("incorrect");
+
+    const incorrectInput = parseInt(selectedNum.textContent, 10);
+    const selectedTileRef = selectedTile;
+
+    await logIncorrectMoveToDatabase(moveContext, incorrectInput);
     clearSelectedNumber();
 
     setTimeout(function () {
         disableSelect = false;
-        selectedTile.classList.remove("incorrect");
-        selectedTile.classList.remove("selected");
-        selectedTile.textContent = "";
-        selectedTile = null;
+        selectedTileRef.classList.remove("incorrect");
+        selectedTileRef.classList.remove("selected");
+        selectedTileRef.textContent = "";
+
+        if (selectedTile === selectedTileRef) {
+            selectedTile = null;
+        }
+
         wrongInputsSinceLastMove++;
     }, 1000);
+}
+
+async function logIncorrectMoveToDatabase(moveContext, incorrectInput) {
+    console.log("Have they pressed tips:", clicked);
+    try {
+        const puzzleAttemptId = localStorage.getItem("puzzleAttemptId");
+        if (!puzzleAttemptId) return;
+
+        const row = moveContext.row + 1;
+        const col = moveContext.col + 1;
+        const correctValue = parseInt(solution[moveContext.index], 10);
+
+        await logIncorrectInput({
+            puzzleAttemptId: parseInt(puzzleAttemptId, 10),
+            moveNumber: moveNumber + 1,
+            attemptNumber: wrongInputsSinceLastMove + 1,
+            cellIndex: getDisplayCellIndex(moveContext.index),
+            inputValue: incorrectInput,
+            correctValue: correctValue,
+            matchedTip: clickedForTips && doesIncorrectInputMatchATip(row, col, incorrectInput),
+            matchedMatchingNumbers: didMatchingNumberHighlightInfluenceInput(incorrectInput),
+            matchedRowColGrid: getRowColGridMatches(moveContext, incorrectInput)
+        });
+    } catch (err) {
+        console.error("Failed to log incorrect input:", err);
+    }
+}
+
+function parseTip(tip) {
+    if (!tip) return null;
+
+    const match = tip.match(/(?:Row\s+(\d+),\s*Col\s+(\d+)|Col\s+(\d+),\s*Row\s+(\d+))\s*→\s*(\d+)/i);
+    if (!match) return null;
+
+    const row = parseInt(match[1] || match[4], 10);
+    const col = parseInt(match[2] || match[3], 10);
+    const value = parseInt(match[5], 10);
+
+    if (Number.isNaN(row) || Number.isNaN(col) || Number.isNaN(value)) {
+        return null;
+    }
+
+    return { row, col, value };
+}
+
+function doesIncorrectInputMatchATip(row, col, inputValue) {
+    if (!Array.isArray(tips) || tips.length === 0) return false;
+
+    return tips.some(function(tip) {
+        const parsedTip = parseTip(tip);
+        return parsedTip &&
+               parsedTip.row === row &&
+               parsedTip.col === col &&
+               parsedTip.value === inputValue;
+    });
+}
+
+function didMatchingNumberHighlightInfluenceInput(inputValue) {
+    if (!lastHighlightedNumberValue) return false;
+    return String(lastHighlightedNumberValue) === String(inputValue);
+}
+
+function getRowColGridMatches(moveContext, inputValue) {
+    const row = moveContext.row;
+    const col = moveContext.col;
+    const input = String(inputValue);
+
+    const matches = [];
+
+    // Check row
+    for (let c = 0; c < board_size; c++) {
+        if (c !== col && String(currentBoard[row][c]) === input) {
+            matches.push("row");
+            break;
+        }
+    }
+
+    // Check column
+    for (let r = 0; r < board_size; r++) {
+        if (r !== row && String(currentBoard[r][col]) === input) {
+            matches.push("column");
+            break;
+        }
+    }
+
+    // Check grid
+    const boxSize = Math.sqrt(board_size);
+    const startRow = Math.floor(row / boxSize) * boxSize;
+    const startCol = Math.floor(col / boxSize) * boxSize;
+
+    for (let r = startRow; r < startRow + boxSize; r++) {
+        for (let c = startCol; c < startCol + boxSize; c++) {
+            if (r === row && c === col) continue;
+
+            if (String(currentBoard[r][c]) === input) {
+                matches.push("grid");
+                r = startRow + boxSize; // exit both loops
+                break;
+            }
+        }
+    }
+
+    return matches;
 }
 
 function clearSelectedNumber() {

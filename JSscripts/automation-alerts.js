@@ -155,6 +155,7 @@ function getAdviceState() {
 }
 
 function display_tips() {
+    clickedForTips = true;
     let currentState = board_grid_to_string(currentBoard);
     candidates = get_candidates(currentState);
     if (lastBoardState != currentState) {

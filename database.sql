@@ -7,6 +7,10 @@ drop table if exists participants cascade;
 drop table if exists staff cascade;
 drop type if exists advice_state_enum cascade;
 
+-- Staff password has
+-- 240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9
+-- for "admin123"
+
 -- Advice state enum
 create type advice_state_enum as enum (
     'correct',
@@ -63,7 +67,11 @@ create table move_logs (
     id bigint generated always as identity primary key,
     puzzle_attempt_id bigint not null references puzzle_attempts(id) on delete cascade,
     move_number integer not null check (move_number > 0),
-    cell_index integer not null check (cell_index >= 0 and cell_index <= 80),
+    cell_index integer not null check (
+        cell_index between 11 and 99
+        and floor(cell_index / 10.0) between 1 and 9
+        and mod(cell_index, 10) between 1 and 9
+    ),
     advice_state advice_state_enum not null,
     tips jsonb,
     incorrect_inputs_count integer not null default 0 check (incorrect_inputs_count >= 0),
@@ -80,7 +88,11 @@ create table incorrect_inputs (
     id bigint generated always as identity primary key,
     move_log_id bigint not null references move_logs(id) on delete cascade,
     attempt_number integer not null check (attempt_number > 0),
-    cell_index integer not null check (cell_index >= 0 and cell_index <= 80),
+    cell_index integer not null check (
+        cell_index between 11 and 99
+        and floor(cell_index / 10.0) between 1 and 9
+        and mod(cell_index, 10) between 1 and 9
+    ),
     input_value integer not null check (input_value between 1 and 9),
     correct_value integer not null check (correct_value between 1 and 9),
     matched_tip boolean not null default false,

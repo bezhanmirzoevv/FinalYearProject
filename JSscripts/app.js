@@ -13,24 +13,18 @@ var timerType;
 var tips = [];
 var score;
 var scaleFactor = 1000;
-var lastMoveTime;
+var lastMoveTime = null;
 var pauseStartTime;
 var wrongInputsSinceLastMove;
 var selectedCellCandidateCount;
 var puzzleOrder = 0;
 var moveNumber;
-var lastMoveTime = null;
 
 
 // Run script once DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     // Clear local storage to ensure a fresh start for each session
-    localStorage.removeItem("participantId");
-    localStorage.removeItem("participantUsername");
-    localStorage.removeItem("isStaff");
-    localStorage.removeItem("experimentSessionId");
-    localStorage.removeItem("puzzleAttemptId");
-
+    resetExperimentSession();
 
     // Initialize Sudoku library
     initializeSudokuLib();
@@ -215,7 +209,6 @@ function initializeGame(inputBoard) {
 }
 
 async function startGame() {
-    // Check if participant is logged in before starting the game
     if (!localStorage.getItem("participantId")) {
         document.getElementById("login-status").textContent = "Please sign in to start the game.";
         document.getElementById("login-status").style.color = "red";
@@ -223,7 +216,7 @@ async function startGame() {
     }
 
     resetGame();
-    //id("spinner-container").classList.remove("hidden");
+
     if (id("difficulty-easy").checked) {
         inputBoard = generateSudoku("easy");
     } else if (id("difficulty-medium").checked) {
@@ -234,29 +227,12 @@ async function startGame() {
         inputBoard = generateSudoku("very-hard");
     }
 
-    //id("spinner-container").classList.add("hidden");
-    initializeGame(inputBoard);
-    lastMoveTime = Date.now();
-
     try {
-        const experimentSessionId = localStorage.getItem("experimentSessionId");
-
-        if (!experimentSessionId) {
-            console.error("No experiment session found.");
-            return;
-        }
-
-        puzzleOrder++;
-        const puzzleAttempt = await createPuzzleAttempt(parseInt(experimentSessionId, 10), localStorage.getItem("currentPuzzleID"), puzzleOrder);
-        localStorage.setItem("puzzleAttemptId", puzzleAttempt.id);
-        localStorage.removeItem("lastMoveLogId");
-
-        wrongInputsSinceLastMove = 0;
-        lastMoveTime = Date.now();
-
-        console.log("Puzzle attempt created:", puzzleAttempt);
-    
-    } catch (err) {console.error("Failed to create puzzle attempt:", err);}
+        await createAndStorePuzzleAttempt(localStorage.getItem("currentPuzzleID"));
+        initializeGame(inputBoard);
+    } catch (err) {
+        console.error("Failed to create puzzle attempt:", err);
+    }
 }
 
 function endGame() {
@@ -379,86 +355,104 @@ function generateBoard(board) {
 }
 
 async function updateMove() {
-    console.log(selectedTile.id);
-    if (selectedTile && selectedNum) {
-        let row = Math.floor(selectedTile.id / board_size);
-        let col = selectedTile.id % board_size;
-        let currentCandidates = get_candidates(board_grid_to_string(currentBoard));
+    if (!selectedTile || !selectedNum) return;
 
-        selectedCellCandidateCount = currentCandidates[row][col].length;
-        selectedTile.textContent = selectedNum.textContent;
+    const moveContext = getMoveContext();
 
-        if (isCorrect(selectedTile)) {
-            clearHighlights();
+    selectedCellCandidateCount = moveContext.currentCandidates[moveContext.row][moveContext.col].length;
+    selectedTile.textContent = selectedNum.textContent;
 
-            let timeTakenSeconds = Math.max((Date.now() - lastMoveTime) / 1000, 0.1);
-            let index = Number(selectedTile.id);
-            let row = Math.floor(index / board_size) + 1;
-            let col = (index % board_size) + 1;
-            let cellIndex = row * 10 + col;
-
-            workOutScore();
-            moveNumber++;
-
-            selectedTile.classList.add("correct");
-
-            currentBoard[Math.floor(selectedTile.id / board_size)][selectedTile.id % board_size] = selectedNum.textContent;
-
-            try {
-                const puzzleAttemptId = localStorage.getItem("puzzleAttemptId");
-
-                if (puzzleAttemptId) {
-                    const moveLog = await logMove({
-                        puzzleAttemptId: parseInt(puzzleAttemptId, 10),
-                        moveNumber: moveNumber,
-                        cellIndex: cellIndex,
-                        adviceState: getAdviceState(),
-                        tips: tips && tips.length > 0 ? tips : null,
-                        incorrectInputsCount: wrongInputsSinceLastMove,
-                        timeTakenSeconds: timeTakenSeconds,
-                        finalInput: selectedTile.textContent
-                    });
-
-                    localStorage.setItem("lastMoveLogId", moveLog.id);
-                    console.log("Move logged:", moveLog);
-                }
-            } catch (err) {
-                console.error("Failed to log move:", err);
-            }
-
-            lastMoveTime = Date.now();
-            wrongInputsSinceLastMove = 0;
-
-            selectedNum.classList.remove("selected");
-            selectedNum = null;
-
-            setTimeout(function() {
-                selectedTile.classList.remove("correct");
-                selectedTile.classList.remove("selected");
-                selectedTile = null;
-            }, 1000);
-
-            if (isDone()) {
-                endGame();
-            }
-        } else {
-            clearHighlights();
-            disableSelect = true;
-            selectedTile.classList.add("incorrect");
-            selectedNum.classList.remove("selected");
-            selectedNum = null;
-            setTimeout(function() {
-                disableSelect = false;
-                selectedTile.classList.remove("incorrect");
-                selectedTile.classList.remove("selected");
-                selectedTile.textContent = "";
-                selectedTile = null;
-                wrongInputsSinceLastMove++;
-            }, 1000);
-        }
-        let toast = bootstrap.Toast.getInstance(id("myToast"));
-        if (toast) toast.hide();
+    if (isCorrect(selectedTile)) {
+        await handleCorrectMove(moveContext);
+    } else {
+        handleIncorrectMove();
     }
+
+    hideToastIfOpen();
+}
+
+async function handleCorrectMove(moveContext) {
+    clearHighlights();
+
+    const timeTakenSeconds = getTimeTakenSeconds();
+    const cellIndex = getDisplayCellIndex(moveContext.index);
+
+    workOutScore();
+    moveNumber++;
+
+    selectedTile.classList.add("correct");
+
+    currentBoard[moveContext.row][moveContext.col] = selectedNum.textContent;
+
+    await logCorrectMoveToDatabase(cellIndex, timeTakenSeconds);
+
+    lastMoveTime = Date.now();
+    wrongInputsSinceLastMove = 0;
+
+    clearSelectedNumber();
+    clearSelectedTileAfterDelay("correct");
+
+    if (isDone()) {
+        endGame();
+    }
+}
+
+async function logCorrectMoveToDatabase(cellIndex, timeTakenSeconds) {
+    try {
+        const puzzleAttemptId = localStorage.getItem("puzzleAttemptId");
+        if (!puzzleAttemptId) return;
+
+        const moveLog = await logMove({
+            puzzleAttemptId: parseInt(puzzleAttemptId, 10),
+            moveNumber: moveNumber,
+            cellIndex: cellIndex,
+            adviceState: getAdviceState(),
+            tips: tips && tips.length > 0 ? tips : null,
+            incorrectInputsCount: wrongInputsSinceLastMove,
+            timeTakenSeconds: timeTakenSeconds,
+            finalInput: selectedTile.textContent
+        });
+
+        localStorage.setItem("lastMoveLogId", moveLog.id);
+        console.log("Move logged:", moveLog);
+    } catch (err) {
+        console.error("Failed to log move:", err);
+    }
+}
+
+function handleIncorrectMove() {
+    clearHighlights();
+    disableSelect = true;
+
+    selectedTile.classList.add("incorrect");
+    clearSelectedNumber();
+
+    setTimeout(function () {
+        disableSelect = false;
+        selectedTile.classList.remove("incorrect");
+        selectedTile.classList.remove("selected");
+        selectedTile.textContent = "";
+        selectedTile = null;
+        wrongInputsSinceLastMove++;
+    }, 1000);
+}
+
+function clearSelectedNumber() {
+    selectedNum.classList.remove("selected");
+    selectedNum = null;
+}
+
+function clearSelectedTileAfterDelay(cssClassName) {
+    setTimeout(function () {
+        selectedTile.classList.remove(cssClassName);
+        selectedTile.classList.remove("selected");
+        selectedTile = null;
+    }, 1000);
+}
+
+function hideToastIfOpen() {
+    let toast = bootstrap.Toast.getInstance(id("myToast"));
+    if (toast) toast.hide();
 }
 
 function isCorrect(tile) {
@@ -499,6 +493,7 @@ function workOutScore() {
         id("difficulty-medium").checked ? 2 :
         id("difficulty-hard").checked ? 3 : 4;
 
+    // The score for a move is calculated based on the time taken, the number of wrong inputs since the last correct move, the difficulty level, and the number of candidates for the cell. The scale factor is used to adjust the overall scoring.
     let moveScore = scaleFactor * difficultyMultiplier * (selectedCellCandidateCount / timeTakenSeconds) / wrongDivisor;
 
     score += moveScore;
@@ -546,7 +541,7 @@ function solve_one_step() {
     }
 }
 
-function refresh_puzzle() {
+async function refresh_puzzle() {
     resetGame();
     //id("spinner-container").classList.remove("hidden");
     if (id("difficulty-easy").checked) {
@@ -560,12 +555,24 @@ function refresh_puzzle() {
     }
 
     //id("spinner-container").classList.add("hidden");
-    initializeGame(inputBoard);
+
+    try {
+        await createAndStorePuzzleAttempt(localStorage.getItem("currentPuzzleID"));
+        initializeGame(inputBoard);
+    } catch (err) {
+        console.error("Failed to create puzzle attempt:", err);
+    }
 }
 
-function restart_puzzle() {
+async function restart_puzzle() {
     resetGame();
-    initializeGame(inputBoard);
+
+    try {
+        await createAndStorePuzzleAttempt(localStorage.getItem("currentPuzzleID"));
+        initializeGame(inputBoard);
+    } catch (err) {
+        console.error("Failed to create puzzle attempt:", err);
+    }
 }
 
 function pause() {
@@ -592,6 +599,61 @@ function resume() {
     }
     // Set button accessibility
     id("tips-btn").disabled = false;
+}
+
+async function createAndStorePuzzleAttempt(puzzleId) {
+    const experimentSessionId = localStorage.getItem("experimentSessionId");
+
+    if (!experimentSessionId) {
+        throw new Error("No experiment session found.");
+    }
+
+    puzzleOrder++;
+    moveNumber = 0;
+    wrongInputsSinceLastMove = 0;
+    lastMoveTime = Date.now();
+
+    localStorage.removeItem("lastMoveLogId");
+    localStorage.removeItem("puzzleAttemptId");
+
+    const puzzleAttempt = await createPuzzleAttempt(
+        parseInt(experimentSessionId, 10),
+        puzzleId,
+        puzzleOrder
+    );
+
+    localStorage.setItem("puzzleAttemptId", puzzleAttempt.id);
+    console.log("Puzzle attempt created:", puzzleAttempt);
+
+    return puzzleAttempt;
+}
+
+function resetExperimentSession() {
+    localStorage.removeItem("participantId");
+    localStorage.removeItem("participantUsername");
+    localStorage.removeItem("participantLoggedIn");
+    localStorage.removeItem("experimentSessionId");
+    localStorage.removeItem("puzzleAttemptId");
+    localStorage.removeItem("lastMoveLogId");
+}
+
+function getMoveContext() {
+    const index = Number(selectedTile.id);
+    const row = Math.floor(index / board_size);
+    const col = index % board_size;
+    const currentCandidates = get_candidates(board_grid_to_string(currentBoard));
+
+    return {index, row, col, currentCandidates};
+}
+
+function getDisplayCellIndex(index) {
+    const row = Math.floor(index / board_size) + 1;
+    const col = (index % board_size) + 1;
+    return row * 10 + col;
+}
+
+function getTimeTakenSeconds() {
+    return Math.max((Date.now() - lastMoveTime) / 1000, 0.1);
 }
 
 // Helper functions

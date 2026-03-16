@@ -114,8 +114,8 @@ function getAdviceState() {
 
     // Find if this move matches the pattern and which occurrence it is
     for (let n = 1; n <= 80; n++) {
-        // Pattern: 4n + (-1)^n → 3, 5, 11, 13, 19, 21, ...
-        let patternValue = 4 * n + Math.pow(-1, n);
+        // Pattern: 8 * floor((n - 1) / 2) + (n % 2 === 1 ? 3 : 5) → 3, 5, 11, 13, 19, 21, ...
+        let patternValue = 8 * Math.floor((n - 1) / 2) + (n % 2 === 1 ? 3 : 5);
 
         if (moveNumber === patternValue) {
             patternIndex = n;

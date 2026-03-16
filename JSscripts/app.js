@@ -380,7 +380,7 @@ async function handleCorrectMove(moveContext) {
 
     const timeTakenSeconds = getTimeTakenSeconds();
     const cellIndex = getDisplayCellIndex(moveContext.index);
-    const totalTimeSeconds = Math.floor(elapsedTime / 1000);
+    const totalTimeSeconds = Math.floor(elapsedTime);
 
     workOutScore();
     moveNumber++;
@@ -392,7 +392,7 @@ async function handleCorrectMove(moveContext) {
     await logCorrectMoveToDatabase(cellIndex, timeTakenSeconds);
     await updatePuzzleAttemptProgress({ 
         puzzleAttemptId: parseInt(localStorage.getItem("puzzleAttemptId"), 10),
-        score: score,
+        score: Math.round(score),
         totalTimeSeconds: totalTimeSeconds
     });
 
@@ -460,7 +460,6 @@ async function handleIncorrectMove(moveContext) {
 }
 
 async function logIncorrectMoveToDatabase(moveContext, incorrectInput) {
-    console.log("Have they pressed tips:", clicked);
     try {
         const puzzleAttemptId = localStorage.getItem("puzzleAttemptId");
         if (!puzzleAttemptId) return;

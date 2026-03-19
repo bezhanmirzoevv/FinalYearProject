@@ -88,6 +88,31 @@ async function updatePuzzleAttemptProgress({
     return data;
 }
 
+async function completePuzzleAttempt({
+    puzzleAttemptId, 
+    score, 
+    totalTimeSeconds
+}) {
+    const { data, error } = await window.supabaseClient
+        .from("puzzle_attempts")
+        .update({
+            score: score,
+            total_time_seconds: totalTimeSeconds,
+            completed: true,
+            finished_at: new Date().toISOString()
+        })
+        .eq("id", puzzleAttemptId)
+        .select("id, score, total_time_seconds, completed, finished_at")
+        .single();
+
+    if (error) {
+        console.error("Error completing puzzle attempt:", error);
+        throw error;
+    }
+
+    return data;
+}
+
 async function logMove({
     puzzleAttemptId,
     moveNumber,

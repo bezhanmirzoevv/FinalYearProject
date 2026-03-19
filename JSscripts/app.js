@@ -238,8 +238,14 @@ async function startGame() {
     }
 }
 
-function endGame() {
+async function endGame() {
     disableSelect = true;
+
+    await completePuzzleAttempt({ 
+        puzzleAttemptId: parseInt(localStorage.getItem("puzzleAttemptId"), 10),
+        score: Math.round(score),
+        totalTimeSeconds: (Math.floor(elapsedTime)) / 1000 // Convert to seconds
+    });
 
     if (timerType == "countdown") {
         cancelAnimationFrame(countdown_timer);
@@ -380,7 +386,7 @@ async function handleCorrectMove(moveContext) {
 
     const timeTakenSeconds = getTimeTakenSeconds();
     const cellIndex = getDisplayCellIndex(moveContext.index);
-    const totalTimeSeconds = Math.floor(elapsedTime);
+    const totalTimeSeconds = (Math.floor(elapsedTime)) / 1000; // Convert to seconds
 
     workOutScore();
     moveNumber++;

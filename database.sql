@@ -1,4 +1,4 @@
--- Optional: clean start if re-running in a test database
+-- Clean start if re-running in a test database
 drop table if exists incorrect_inputs cascade;
 drop table if exists move_logs cascade;
 drop table if exists puzzle_attempts cascade;
@@ -7,15 +7,19 @@ drop table if exists participants cascade;
 drop table if exists staff cascade;
 drop type if exists advice_state_enum cascade;
 
--- Staff password has
--- 240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9
--- for "admin123"
-
 -- Advice state enum
 create type advice_state_enum as enum (
     'correct',
     'slightly_incorrect',
     'blatantly_incorrect'
+);
+
+-- Experiment setting variables
+create table experiment_settings (
+    id bigint generated always as identity primary key,
+    scaling_factor numeric(2,1) not null check (scaling_factor >= 0 and scaling_factor <= 1),
+    blatancy_factor numeric(2,1) not null check (blatancy_factor >= 0 and blatancy_factor <= 1),
+    updated_at timestamptz not null default now()
 );
 
 -- 1. staff
@@ -135,8 +139,13 @@ create index idx_incorrect_inputs_cell_index
 create index idx_incorrect_inputs_matched_tip
     on incorrect_inputs(matched_tip);
 
--- Insert initial staff user
+-- Staff password hash
+-- 240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9
+-- for "admin123"
+-- Insert initial test data
 insert into staff (username, password_hash) values (
     'staff',
     '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9'
 );
+
+insert into experiment_settings (scaling_factor, blatancy_factor) values (1.0, 0.5);

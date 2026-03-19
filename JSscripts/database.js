@@ -26,14 +26,61 @@ async function getOrCreateParticipant(username) {
         return newParticipant;
     }
 
+async function setExperimentSettings(scalingFactor, blatancyFactor) {
+        const { data, error } = await window.supabaseClient
+            .from("experiment_settings")
+            .update({
+                scaling_factor: scalingFactor,
+                blatancy_factor: blatancyFactor,
+                updated_at: new Date().toISOString()
+            })
+            .eq("id", 1)
+            .select("id, scaling_factor, blatancy_factor, updated_at")
+            .single();
+
+        if (error) {
+            console.error("Error updating experiment settings:", error);
+            throw error;
+        }
+    }
+
+async function getScalingFactor() {
+        const { data, error } = await window.supabaseClient
+            .from("experiment_settings")
+            .select("scaling_factor")
+            .single();
+
+        if (error) {
+            console.error("Error fetching scaling factor:", error);
+            throw error;
+        }
+
+        return data.scaling_factor;
+    }
+
+async function getBlatancyFactor() {
+        const { data, error } = await window.supabaseClient
+            .from("experiment_settings")
+            .select("blatancy_factor")
+            .single();
+
+        if (error) {
+            console.error("Error fetching blatancy factor:", error);
+            throw error;
+        }
+
+        return data.blatancy_factor;
+    }
+
+
 async function createExperimentSession(participantId) {
         const { data, error } = await window.supabaseClient
             .from("experiment_sessions")
             .insert([{
                 participant_id: participantId,
                 experiment_date: new Date().toISOString().slice(0, 10),
-                scaling_factor: 1.0,
-                blatancy_factor: 0.5,
+                scaling_factor: await getScalingFactor(),
+                blatancy_factor: await getBlatancyFactor(),
                 started_at: new Date().toISOString()
             }])
             .select("id, participant_id, started_at")

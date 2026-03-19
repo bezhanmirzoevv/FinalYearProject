@@ -338,3 +338,51 @@ function _get_candidates_map(board) {
 
     return candidate_map;
 }
+
+// Get candidates for a board without using logic (i.e., just checking row, column, and box)
+function get_candidates_without_logic(boardGrid, row, col) {
+    if (boardGrid[row][col] !== "." && boardGrid[row][col] !== BLANK_CHAR) {
+        return [String(boardGrid[row][col])];
+    }
+
+    const used = new Set();
+
+    // Row
+    for (let c = 0; c < board_size; c++) {
+        const val = String(boardGrid[row][c]);
+        if (val !== "." && val !== BLANK_CHAR) {
+            used.add(val);
+        }
+    }
+
+    // Column
+    for (let r = 0; r < board_size; r++) {
+        const val = String(boardGrid[r][col]);
+        if (val !== "." && val !== BLANK_CHAR) {
+            used.add(val);
+        }
+    }
+
+    // 3x3 grid
+    const startRow = Math.floor(row / box_size) * box_size;
+    const startCol = Math.floor(col / box_size) * box_size;
+
+    for (let r = startRow; r < startRow + box_size; r++) {
+        for (let c = startCol; c < startCol + box_size; c++) {
+            const val = String(boardGrid[r][c]);
+            if (val !== "." && val !== BLANK_CHAR) {
+                used.add(val);
+            }
+        }
+    }
+
+    const candidates = [];
+    for (let n = 1; n <= board_size; n++) {
+        const str = String(n);
+        if (!used.has(str)) {
+            candidates.push(str);
+        }
+    }
+
+    return candidates;
+}

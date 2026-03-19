@@ -4,6 +4,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const passwordInput = document.getElementById("staff-password-input");
     const loginStatus = document.getElementById("login-status");
 
+    const settingStatus = document.getElementById("settings-status");
+
     async function hashPassword(password) {
         const encoder = new TextEncoder();
         const data = encoder.encode(password);
@@ -60,6 +62,10 @@ document.addEventListener("DOMContentLoaded", function () {
                     usernameInput.disabled = true;
                     passwordInput.disabled = true;
                     usernameSubmitBtn.disabled = true;
+
+                    id("staff-settings").style.display = "block";
+                    id("scaling-factor-input").value = await getScalingFactor();
+                    id("blatancy-factor-input").value = await getBlatancyFactor();
                 } else {
                     loginStatus.textContent = "Incorrect password.";
                     loginStatus.style.color = "red";
@@ -109,5 +115,31 @@ document.addEventListener("DOMContentLoaded", function () {
             e.preventDefault();
             usernameSubmitBtn.click();
         }
+    });
+
+    id("save-settings-btn").addEventListener("click", async function () {    
+        const scalingFactor = parseFloat(document.getElementById("scaling-factor-input").value);
+        const blatancyFactor = parseFloat(document.getElementById("blatancy-factor-input").value);
+
+        if (isNaN(scalingFactor) || scalingFactor < 0 || scalingFactor > 1) {
+            settingStatus.textContent = "Scaling factor must be between 0 and 1.";
+            settingStatus.style.color = "red";
+            return;
+        }
+        if (isNaN(blatancyFactor) || blatancyFactor < 0 || blatancyFactor > 1) {
+            settingStatus.textContent = "Blatancy factor must be between 0 and 1.";
+            settingStatus.style.color = "red";
+            return;
+        }
+        try {            
+            await setExperimentSettings(scalingFactor, blatancyFactor);
+            settingStatus.textContent = "Experiment settings updated.";
+            settingStatus.style.color = "white";
+        } catch (err) {
+            console.error("Error updating settings:", err);
+            settingStatus.textContent = "Failed to update settings.";
+            settingStatus.style.color = "red";
+        }
+
     });
 });

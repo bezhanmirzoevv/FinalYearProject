@@ -102,9 +102,9 @@ function highlightRowAndColumn(tile) {
     tile.classList.add("row-col-highlight");
 }
 
-function getAdviceState() {
-    let s = 1; // Thinning factor (0 = no incorrect advice, 1 = all incorrect advice)
-    let a = 0.5; // Blatancy factor (0 = all incorrect advice is slightly incorrect, 1 = all incorrect advice is blatantly incorrect)
+async function getAdviceState() {
+    let s = await getScalingFactor(); // Scaling factor (0 = no incorrect advice, 1 = all incorrect advice)
+    let a = await getBlatancyFactor(); // Blatancy factor (0 = all incorrect advice is slightly incorrect, 1 = all incorrect advice is blatantly incorrect)
 
     // Clamp values
     s = Math.max(0, Math.min(1, s));

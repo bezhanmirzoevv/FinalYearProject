@@ -81,8 +81,6 @@ document.addEventListener('DOMContentLoaded', function() {
     id("tips-btn").addEventListener("click", display_tips);
     // Add event listener to "Refresh puzzle" button
     id("refresh-btn").addEventListener("click", refresh_puzzle);
-    // Add event listener to "Restart puzzle" button
-    id("restart-btn").addEventListener("click", restart_puzzle);
     // Add event listener to "Pause" button
     id("pause-btn").addEventListener("click", pause);
     // Add event listener to "Resume" button
@@ -197,7 +195,6 @@ function resetGame() {
     // Set button accessibility
     id("tips-btn").disabled = false;
     id("refresh-btn").disabled = false;
-    id("restart-btn").disabled = false;
     id("pause-btn").disabled = false;
     id("resume-btn").disabled = true;
 }
@@ -279,7 +276,7 @@ async function endGame() {
 
     swal({
         title: title_txt,
-        text: "Try again? Press 'New game!' or 'Refresh/Restart puzzle' button.🚀",
+        text: "Try again? Press 'New game!'🚀",
         icon: "info",
     });
 
@@ -369,7 +366,7 @@ async function updateMove() {
 
     const moveContext = getMoveContext();
 
-    selectedCellCandidateCount = moveContext.currentCandidates[moveContext.row][moveContext.col].length;
+    selectedCellCandidateCount = get_candidates_without_logic(currentBoard, moveContext.row, moveContext.col).length;
     selectedTile.textContent = selectedNum.textContent;
 
     if (isCorrect(selectedTile)) {
@@ -653,7 +650,7 @@ function show_solution() {
     // Display message to the user
     swal({
         title: "Try again?😉",
-        text: "Press 'New game!' or 'Refresh/Restart puzzle' button.🚀",
+        text: "Press 'New game!' button.🚀",
         icon: "info",
     });
 }
@@ -685,17 +682,6 @@ async function refresh_puzzle() {
     }
 
     //id("spinner-container").classList.add("hidden");
-
-    try {
-        await createAndStorePuzzleAttempt(localStorage.getItem("currentPuzzleID"));
-        initializeGame(inputBoard);
-    } catch (err) {
-        console.error("Failed to create puzzle attempt:", err);
-    }
-}
-
-async function restart_puzzle() {
-    resetGame();
 
     try {
         await createAndStorePuzzleAttempt(localStorage.getItem("currentPuzzleID"));

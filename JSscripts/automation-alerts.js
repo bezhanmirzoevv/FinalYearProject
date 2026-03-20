@@ -29,10 +29,10 @@ function clearHighlights() {
     }
 }
 
-function highlightMatchingNumbers(value, clickedTile) {
+async function highlightMatchingNumbers(value, clickedTile) {
     if (!value) return;
 
-    let adviceState = getAdviceState();
+    let adviceState = await getAdviceState();
     let matches = getMatchingTiles(value).filter(tile => tile !== clickedTile);
 
     clickedTile.classList.add("match-highlight");
@@ -64,10 +64,10 @@ function highlightMatchingNumbers(value, clickedTile) {
     }
 }
 
-function highlightRowAndColumn(tile) {
+async function highlightRowAndColumn(tile) {
     if (!tile) return;
 
-    let adviceState = getAdviceState();
+    let adviceState = await getAdviceState();
 
     let tileIndex = parseInt(tile.id);
     let row = Math.floor(tileIndex / board_size);
@@ -154,13 +154,13 @@ async function getAdviceState() {
     return "slightly-incorrect";
 }
 
-function display_tips() {
+async function display_tips() {
     clickedForTips = true;
     let currentState = board_grid_to_string(currentBoard);
     candidates = get_candidates(currentState);
     if (lastBoardState != currentState) {
 
-        let adviceState = getAdviceState();
+        let adviceState = await getAdviceState();
         //let adviceState = "slightly-incorrect"
         tips = [];
 

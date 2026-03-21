@@ -21,6 +21,8 @@ var puzzleOrder = 0;
 var moveNumber;
 var lastHighlightedNumberValue;
 let clickedForTips = false;
+var scalingFactor;
+var blatancyFactor;
 
 
 // Run script once DOM is loaded
@@ -229,6 +231,10 @@ async function startGame() {
 
     try {
         await createAndStorePuzzleAttempt(localStorage.getItem("currentPuzzleID"));
+        scalingFactor = await getScalingFactor(); // Scaling factor (0 = no incorrect advice, 1 = all incorrect advice)
+        blatancyFactor = await getBlatancyFactor(); // Blatancy factor (0 = all incorrect advice is slightly incorrect, 1 = all incorrect advice is blatantly incorrect)
+        console.log("Scaling factor (s):", scalingFactor);
+        console.log("Blatancy factor (a):", blatancyFactor);
         initializeGame(inputBoard);
     } catch (err) {
         console.error("Failed to create puzzle attempt:", err);

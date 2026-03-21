@@ -102,13 +102,11 @@ function highlightRowAndColumn(tile) {
     tile.classList.add("row-col-highlight");
 }
 
-async function getAdviceState() {
-    let s = await getScalingFactor(); // Scaling factor (0 = no incorrect advice, 1 = all incorrect advice)
-    let a = await getBlatancyFactor(); // Blatancy factor (0 = all incorrect advice is slightly incorrect, 1 = all incorrect advice is blatantly incorrect)
-
+function getAdviceState() {
+    
     // Clamp values
-    s = Math.max(0, Math.min(1, s));
-    a = Math.max(0, Math.min(1, a));
+    scalingFactor = Math.max(0, Math.min(1, scaleFactor));
+    blatancyFactor = Math.max(0, Math.min(1, blatancyFactor));
 
     let patternIndex = -1;  // -1 means not part of pattern
 
@@ -125,12 +123,12 @@ async function getAdviceState() {
     }
 
     // Not part of pattern → correct advice OR s = 0 → all advice is correct
-    if (patternIndex === -1 || s === 0) {
+    if (patternIndex === -1 || scalingFactor === 0) {
         return "correct";
     }
 
     // Determine thinning interval
-    let thinningInterval = Math.round(1 / s);
+    let thinningInterval = Math.round(1 / scalingFactor);
 
     // Only keep every thinningInterval-th pattern event
     if (patternIndex % thinningInterval !== 0) {
@@ -141,11 +139,11 @@ async function getAdviceState() {
     let incorrectIndex = patternIndex / thinningInterval;
 
     // If a = 0 → always slightly incorrect
-    if (a === 0) {
+    if (blatancyFactor === 0) {
         return "slightly-incorrect";
     }
 
-    let blatantInterval = Math.round(1 / a);
+    let blatantInterval = Math.round(1 / blatancyFactor);
 
     if (incorrectIndex % blatantInterval === 0) {
         return "blatantly-incorrect";

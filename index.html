@@ -152,7 +152,7 @@
         </div>
     </div>
 
-    <div id="game-container">
+    <div id="game-container" class="hidden">
         <div class="alert alert-warning center-screen hidden" id="alert-pause" role="alert">
             <i class="far fa-pause-circle"></i> PAUSED
         </div>
@@ -170,10 +170,38 @@
             <div id="time-2">
                 <div id="stopwatch-container" class="hidden" style="margin-top: 35px"></div>
             </div>
-            <p id="lives"></p>
+            <p id="score"></p>
+            <p id="automation-advice-reminder" style="font-size: 18px; color: #000000;">
+                Remember, selecting a number highlights matching values, 
+                selecting an empty cell <br> highlights its row and column, and the <strong>Tips</strong> button offers additional suggestions</p>
             <div class="snackbar" id="snackbar-win">You won!🏆</div>
             <div class="snackbar" id="snackbar-lose">You lost!☹️</div>
         </div>
+
+        
+        <p>
+            <div class="center-screen">
+                <div class="btn-group" role="group">
+                    <button type="button" id="tips-btn" class="btn btn-secondary btn-sm" disabled rel="tooltip" title="Show all possible values for each empty cell." data-placement="bottom">
+                        <i class="fas fa-atom"></i> Tips
+                    </button>
+                </div>
+                <div class="btn-group" role="group">
+                    <button type="button" id="refresh-btn" class="btn btn-secondary btn-sm" disabled rel="tooltip" title="Refresh the Sudoku board with the same difficulty." data-placement="bottom">
+                        <i class="fas fa-angle-double-right"></i> Next puzzle
+                    </button>
+                </div>
+                <div class="btn-group" role="group">
+                    <button type="button" id="pause-btn" class="btn btn-secondary btn-sm" disabled>
+                        <i class="fas fa-pause"></i> Pause
+                    </button>
+
+                    <button type="button" id="resume-btn" class="btn btn-secondary btn-sm" disabled>
+                        <i class="fas fa-hourglass-half"></i> Resume
+                    </button>
+                </div>
+            </div>
+        </p>
 
         <div id="game" class="center-screen">
             <div id="board"></div>
@@ -198,31 +226,6 @@
         </div>
     </div>
 
-    
-
-    <p>
-        <div class="center-screen">
-            <div class="btn-group" role="group">
-                <button type="button" id="tips-btn" class="btn btn-secondary btn-sm" disabled rel="tooltip" title="Show all possible values for each empty cell." data-placement="bottom">
-					<i class="fas fa-atom"></i> Tips
-				</button>
-            </div>
-            <div class="btn-group" role="group">
-                <button type="button" id="refresh-btn" class="btn btn-secondary btn-sm" disabled rel="tooltip" title="Refresh the Sudoku board with the same difficulty." data-placement="bottom">
-					<i class="fas fa-angle-double-right"></i> Next puzzle
-				</button>
-            </div>
-            <div class="btn-group" role="group">
-                <button type="button" id="pause-btn" class="btn btn-secondary btn-sm" disabled>
-					<i class="fas fa-pause"></i> Pause
-				</button>
-
-                <button type="button" id="resume-btn" class="btn btn-secondary btn-sm" disabled>
-					<i class="fas fa-hourglass-half"></i> Resume
-				</button>
-            </div>
-        </div>
-    </p>
 
     <hr style="width: 100%; margin-left: auto; margin-right: auto;">
 

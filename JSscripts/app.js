@@ -32,6 +32,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize Sudoku library
     initializeSudokuLib();
+
     // Execute startGame function when start button is clicked
     id("start-btn").addEventListener("click", startGame);
     // Add event listener to theme toggle button
@@ -238,6 +239,7 @@ async function startGame() {
         console.log("Scaling factor (s):", scalingFactor);
         console.log("Blatancy factor (a):", blatancyFactor);
         initializeGame(inputBoard);
+        document.getElementById("game-container").classList.remove("hidden");
     } catch (err) {
         console.error("Failed to create puzzle attempt:", err);
     }
@@ -615,7 +617,7 @@ function clearPrevious() {
 }
 
 function displayScore(score) {
-    id("lives").textContent = "Score: " + Math.round(score);
+    id("score").textContent = "Score: " + Math.round(score);
 }
 
 function workOutScore() {
@@ -740,11 +742,7 @@ async function createAndStorePuzzleAttempt(puzzleId) {
     localStorage.removeItem("lastMoveLogId");
     localStorage.removeItem("puzzleAttemptId");
 
-    const puzzleAttempt = await createPuzzleAttempt(
-        parseInt(experimentSessionId, 10),
-        puzzleId,
-        puzzleOrder
-    );
+    const puzzleAttempt = await createPuzzleAttempt( parseInt(experimentSessionId, 10), puzzleId, puzzleOrder);
 
     localStorage.setItem("puzzleAttemptId", puzzleAttempt.id);
     console.log("Puzzle attempt created:", puzzleAttempt);

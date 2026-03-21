@@ -105,7 +105,7 @@ async function highlightRowAndColumn(tile) {
 function getAdviceState() {
     
     // Clamp values
-    scalingFactor = Math.max(0, Math.min(1, scaleFactor));
+    scalingFactor = Math.max(0, Math.min(1, scalingFactor));
     blatancyFactor = Math.max(0, Math.min(1, blatancyFactor));
 
     let patternIndex = -1;  // -1 means not part of pattern

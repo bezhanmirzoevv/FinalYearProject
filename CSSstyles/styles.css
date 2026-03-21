@@ -31,9 +31,11 @@ h1 {
     margin-bottom: 12px;
 }
 
-#lives {
+#score {
     font-size: 25px;
     font-weight: bold;
+    margin-top: 1rem;
+    margin-block: 1rem
 }
 
 #game {
@@ -46,7 +48,6 @@ h1 {
     width: 60px;
     height: 60px;
     font-size: 40pt;
-    margin-left: 50px;
     margin-top: 5px;
     margin-bottom: 5px;
     cursor: pointer;

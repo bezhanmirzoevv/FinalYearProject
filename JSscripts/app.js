@@ -761,28 +761,43 @@ function resetExperimentSession() {
 }
 
 async function finishTest() {
-    const confirmed = confirm("Are you sure you want to finish the test? You will be logged out.");
-    if (!confirmed) return;
+    swal({
+        title: "Finish Test?",
+        text: "This will end your session and log you out.",
+        icon: "warning",
+        buttons: ["Cancel", "Yes, finish"],
+        dangerMode: true,
+    }).then(async (willFinish) => {
+        if (!willFinish) return;
 
-    try {
-        // Call your existing function
-        await endExperimentSession();
+        try {
+            await endExperimentSession();
 
-        // Clear session/local storage
-        localStorage.removeItem("participantId");
-        localStorage.removeItem("participantUsername");
-        localStorage.removeItem("participantLoggedIn");
-        localStorage.removeItem("experimentSessionId");
-        localStorage.removeItem("puzzleAttemptId");
-        localStorage.removeItem("currentPuzzleID");
+            localStorage.removeItem("participantId");
+            localStorage.removeItem("participantUsername");
+            localStorage.removeItem("participantLoggedIn");
+            localStorage.removeItem("experimentSessionId");
+            localStorage.removeItem("puzzleAttemptId");
+            localStorage.removeItem("currentPuzzleID");
 
-        alert("Test completed. Thank you!");
-        location.reload();
+            swal({
+                title: "Test completed",
+                text: "Thank you for participating!" + "\n" + "You can now close this window and return to Qualtrics.",
+                icon: "success"
+            }).then(() => {
+                location.reload();
+            });
 
-    } catch (err) {
-        console.error("Error finishing test:", err);
-        alert("Something went wrong. Please try again.");
-    }
+        } catch (err) {
+            console.error("Error finishing test:", err);
+
+            swal({
+                title: "Error",
+                text: "Something went wrong. Please try again.",
+                icon: "error"
+            });
+        }
+    });
 }
 
 function getMoveContext() {

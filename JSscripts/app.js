@@ -80,7 +80,9 @@ document.addEventListener('DOMContentLoaded', function() {
         })
     }
     // Add event listener to "Tips" button
-    id("tips-btn").addEventListener("click", display_tips);
+    id("tips-btn").addEventListener("click", async function () {
+        await display_tips();
+    });
     // Add event listener to "Refresh puzzle" button
     id("refresh-btn").addEventListener("click", refresh_puzzle);
     // Add event listener to "Pause" button
@@ -326,7 +328,7 @@ function generateBoard(board) {
             tile.textContent = board[i];
         }
 
-        tile.addEventListener("click", function() {
+        tile.addEventListener("click", async function() {
             clearHighlights();
             if (disableSelect) return;
 
@@ -336,7 +338,7 @@ function generateBoard(board) {
                     selectedTile = null;
                 }
                 lastHighlightedNumberValue = tile.textContent;
-                highlightMatchingNumbers(tile.textContent, tile);
+                await highlightMatchingNumbers(tile.textContent, tile);
                 return;
             }
 
@@ -348,7 +350,7 @@ function generateBoard(board) {
                 if (selectedTile) {selectedTile.classList.remove("selected");}
                 tile.classList.add("selected");
                 selectedTile = tile;
-                highlightRowAndColumn(tile);
+                await highlightRowAndColumn(tile);
                 updateMove();
             }
         });

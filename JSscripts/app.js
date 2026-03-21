@@ -204,7 +204,7 @@ function resetGame() {
     id("refresh-btn").disabled = false;
     id("pause-btn").disabled = false;
     id("resume-btn").disabled = true;
-    id("finished-btn").disabled = true;
+    id("finished-btn").disabled = false;
 }
 
 function initializeGame(inputBoard) {
@@ -297,7 +297,6 @@ async function endGame() {
     id("tips-btn").disabled = true;
     id("pause-btn").disabled = true;
     id("resume-btn").disabled = true;
-    id("finished-btn").disabled = true;
 }
 
 function readInput(file) {
@@ -761,7 +760,29 @@ function resetExperimentSession() {
     localStorage.removeItem("puzzleAttemptId");
 }
 
-function finishTest() {
+async function finishTest() {
+    const confirmed = confirm("Are you sure you want to finish the test? You will be logged out.");
+    if (!confirmed) return;
+
+    try {
+        // Call your existing function
+        await endExperimentSession();
+
+        // Clear session/local storage
+        localStorage.removeItem("participantId");
+        localStorage.removeItem("participantUsername");
+        localStorage.removeItem("participantLoggedIn");
+        localStorage.removeItem("experimentSessionId");
+        localStorage.removeItem("puzzleAttemptId");
+        localStorage.removeItem("currentPuzzleID");
+
+        alert("Test completed. Thank you!");
+        location.reload();
+
+    } catch (err) {
+        console.error("Error finishing test:", err);
+        alert("Something went wrong. Please try again.");
+    }
 }
 
 function getMoveContext() {

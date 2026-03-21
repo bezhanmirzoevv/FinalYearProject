@@ -92,6 +92,26 @@ async function createExperimentSession(participantId) {
         return data;
     }
 
+async function endExperimentSession() {
+    const experimentSessionId = localStorage.getItem("experimentSessionId");
+
+    if (!experimentSessionId) {
+        throw new Error("No session found.");
+    }
+
+    const { error } = await window.supabaseClient
+        .from("experiment_sessions")
+        .update({
+            finished_at: new Date().toISOString()
+        })
+        .eq("id", experimentSessionId)
+        .is("finished_at", null);
+
+    if (error) {
+        throw error;
+    }
+}
+
 async function createPuzzleAttempt(sessionId, puzzleId, puzzleOrder) {
     const { data, error } = await window.supabaseClient
         .from("puzzle_attempts")

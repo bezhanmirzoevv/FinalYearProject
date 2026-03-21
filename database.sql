@@ -1,4 +1,5 @@
 -- Clean start if re-running in a test database
+drop table if exists experiment_settings cascade;
 drop table if exists incorrect_inputs cascade;
 drop table if exists move_logs cascade;
 drop table if exists puzzle_attempts cascade;
@@ -41,12 +42,10 @@ create table participants (
 create table experiment_sessions (
     id bigint generated always as identity primary key,
     participant_id bigint not null references participants(id) on delete cascade,
-    experiment_date date not null,
     scaling_factor numeric(3,2) not null check (scaling_factor >= 0 and scaling_factor <= 1),
     blatancy_factor numeric(3,2) not null check (blatancy_factor >= 0 and blatancy_factor <= 1),
     started_at timestamptz,
     finished_at timestamptz,
-    created_at timestamptz not null default now(),
     check (finished_at is null or started_at is null or finished_at >= started_at)
 );
 
@@ -61,14 +60,12 @@ create table puzzle_attempts (
     completed boolean not null default false,
     started_at timestamptz,
     finished_at timestamptz,
-    created_at timestamptz not null default now(),
     check (finished_at is null or started_at is null or finished_at >= started_at),
     unique (session_id, puzzle_order)
 );
 
 -- 5. move_logs
 create table move_logs (
-    id bigint generated always as identity primary key,
     puzzle_attempt_id bigint not null references puzzle_attempts(id) on delete cascade,
     move_number integer not null check (move_number > 0),
     cell_index integer not null check (
@@ -84,12 +81,11 @@ create table move_logs (
     created_at timestamptz not null default now(),
     check (tips is null or jsonb_typeof(tips) = 'array'),
     check (tips is null or jsonb_array_length(tips) <= 10),
-    unique (puzzle_attempt_id, move_number)
+    primary key (puzzle_attempt_id, move_number)
 );
 
 -- 6. incorrect_inputs
 create table incorrect_inputs (
-    id bigint generated always as identity primary key,
     puzzle_attempt_id bigint not null references puzzle_attempts(id) on delete cascade,
     move_number integer not null check (move_number > 0),
     attempt_number integer not null check (attempt_number > 0),
@@ -105,7 +101,7 @@ create table incorrect_inputs (
     matched_row_col_grid text[] default '{}'::text[] check (matched_row_col_grid <@ array['row','column','grid']),
     created_at timestamptz not null default now(),
     check (input_value <> correct_value),
-    unique (puzzle_attempt_id, move_number, attempt_number)
+    primary key (puzzle_attempt_id, move_number, attempt_number)
 );
 
 -- Helpful indexes

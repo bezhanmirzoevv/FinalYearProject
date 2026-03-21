@@ -90,6 +90,8 @@ document.addEventListener('DOMContentLoaded', function() {
     id("pause-btn").addEventListener("click", pause);
     // Add event listener to "Resume" button
     id("resume-btn").addEventListener("click", resume);
+    // Add event listener to "Finished with Test" button
+    id("finished-btn").addEventListener("click", finishTest);
 });
 
 function resetGame() {
@@ -202,6 +204,7 @@ function resetGame() {
     id("refresh-btn").disabled = false;
     id("pause-btn").disabled = false;
     id("resume-btn").disabled = true;
+    id("finished-btn").disabled = true;
 }
 
 function initializeGame(inputBoard) {
@@ -294,6 +297,7 @@ async function endGame() {
     id("tips-btn").disabled = true;
     id("pause-btn").disabled = true;
     id("resume-btn").disabled = true;
+    id("finished-btn").disabled = true;
 }
 
 function readInput(file) {
@@ -440,7 +444,6 @@ async function logCorrectMoveToDatabase(cellIndex, timeTakenSeconds) {
             finalInput: selectedTile.textContent
         });
 
-        localStorage.setItem("lastMoveLogId", moveLog.id);
         console.log("Move logged:", moveLog);
     } catch (err) {
         console.error("Failed to log move:", err);
@@ -740,7 +743,6 @@ async function createAndStorePuzzleAttempt(puzzleId) {
     wrongInputsSinceLastMove = 0;
     lastMoveTime = Date.now();
 
-    localStorage.removeItem("lastMoveLogId");
     localStorage.removeItem("puzzleAttemptId");
 
     const puzzleAttempt = await createPuzzleAttempt( parseInt(experimentSessionId, 10), puzzleId, puzzleOrder);
@@ -757,7 +759,9 @@ function resetExperimentSession() {
     localStorage.removeItem("participantLoggedIn");
     localStorage.removeItem("experimentSessionId");
     localStorage.removeItem("puzzleAttemptId");
-    localStorage.removeItem("lastMoveLogId");
+}
+
+function finishTest() {
 }
 
 function getMoveContext() {

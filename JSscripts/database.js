@@ -78,7 +78,6 @@ async function createExperimentSession(participantId) {
             .from("experiment_sessions")
             .insert([{
                 participant_id: participantId,
-                experiment_date: new Date().toISOString().slice(0, 10),
                 scaling_factor: await getScalingFactor(),
                 blatancy_factor: await getBlatancyFactor(),
                 started_at: new Date().toISOString()
@@ -189,7 +188,7 @@ async function logMove({
             final_input: finalInput ? parseInt(finalInput, 10) : null,
             created_at: new Date().toISOString()
         }])
-        .select("id, move_number, cell_index")
+        .select("move_number, cell_index")
         .single();
 
     if (error) {
@@ -224,7 +223,7 @@ async function logIncorrectInput({
             matched_row_col_grid: matchedRowColGrid ?? [],
             created_at: new Date().toISOString()
         }])
-        .select("id, move_number, attempt_number, cell_index")
+        .select("move_number, attempt_number, cell_index")
         .single();
 
     if (error) {

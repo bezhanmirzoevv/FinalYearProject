@@ -217,6 +217,7 @@ async function startGame() {
     if (!localStorage.getItem("participantId")) {
         document.getElementById("login-status").textContent = "Please sign in to start the game.";
         document.getElementById("login-status").style.color = "red";
+        document.getElementById("login-status").style.display = "block";
         return;
     }
 

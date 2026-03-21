@@ -22,6 +22,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (!username) {
             loginStatus.textContent = "Please enter a username.";
             loginStatus.style.color = "red";
+            loginStatus.style.display = "block";
             return;
         }
 
@@ -46,6 +47,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (!data) {
                     loginStatus.textContent = "Staff user not found.";
                     loginStatus.style.color = "red";
+                    loginStatus.style.display = "block";
                     return;
                 }
 
@@ -58,6 +60,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
                     loginStatus.textContent = "You have logged in as staff.";
                     loginStatus.style.color = "white";
+                    loginStatus.style.display = "block";
 
                     usernameInput.disabled = true;
                     passwordInput.disabled = true;
@@ -69,11 +72,13 @@ document.addEventListener("DOMContentLoaded", function () {
                 } else {
                     loginStatus.textContent = "Incorrect password.";
                     loginStatus.style.color = "red";
+                    loginStatus.style.display = "block";
                 }
             } catch (err) {
                 console.error("Staff login error:", err);
                 loginStatus.textContent = "Database connection failed.";
                 loginStatus.style.color = "red";
+                loginStatus.style.display = "block";
             }
         } else {
             try {
@@ -88,6 +93,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 loginStatus.textContent = "Participant login successful.";
                 loginStatus.style.color = "white";
+                loginStatus.style.display = "block";
 
                 usernameInput.disabled = true;
                 passwordInput.disabled = true;
@@ -99,6 +105,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 console.error("Participant login error:", err);
                 loginStatus.textContent = "Participant login failed.";
                 loginStatus.style.color = "red";
+                loginStatus.style.display = "block";
             }
         }
     });
@@ -124,21 +131,25 @@ document.addEventListener("DOMContentLoaded", function () {
         if (isNaN(scalingFactor) || scalingFactor < 0 || scalingFactor > 1) {
             settingStatus.textContent = "Scaling factor must be between 0 and 1.";
             settingStatus.style.color = "red";
+            settingStatus.style.display = "block";
             return;
         }
         if (isNaN(blatancyFactor) || blatancyFactor < 0 || blatancyFactor > 1) {
             settingStatus.textContent = "Blatancy factor must be between 0 and 1.";
             settingStatus.style.color = "red";
+            settingStatus.style.display = "block";
             return;
         }
         try {            
             await setExperimentSettings(scalingFactor, blatancyFactor);
             settingStatus.textContent = "Experiment settings updated.";
             settingStatus.style.color = "white";
+            settingStatus.style.display = "block";
         } catch (err) {
             console.error("Error updating settings:", err);
             settingStatus.textContent = "Failed to update settings.";
             settingStatus.style.color = "red";
+            settingStatus.style.display = "block";
         }
 
     });

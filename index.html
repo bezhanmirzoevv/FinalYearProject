@@ -38,37 +38,30 @@
 					</label>
                 </div>
             </div>
-            <div class="github">
-                <!-- Questionnaire -->
-                <a class="questionnaire-btn" href="https://cityunilondon.eu.qualtrics.com/jfe/form/SV_9MmMCDK2qczGUMS" target="_blank" aria-label="Questionnaire">
+            <div class="login-panel">
+                <a id="questionnaire-btn" href="https://cityunilondon.eu.qualtrics.com/jfe/form/SV_9MmMCDK2qczGUMS" target="_blank" aria-label="Questionnaire">
                     Please fill out the questionnaire
                 </a>
 
-                <!-- Username login area -->
-                <div style="margin-top: 15px; text-align: center;">
+                <div class="login-row">
                     <input type="text" id="username-input" placeholder="Enter username">
-
-                    <!-- Hidden password field -->
                     <input type="password" id="staff-password-input" placeholder="Enter password" class="hidden">
-
-                    <button type="button" id="username-submit-btn"
-                        style="padding: 8px 14px; font-size: 16px; margin-left: 8px; border-radius: 5px; border: none; cursor: pointer;">
-                        Submit
-                    </button>
+                    <button type="button" id="username-submit-btn">Submit</button>
                 </div>
-                <p id="login-status" style="margin-top:10px; font-size:16px;"></p>
 
-                <!-- Staff settings (initially hidden) -->
-                <div id="staff-settings" style="display: none;">
+                <p id="login-status" style="display: none;"></p>
+
+                <div id="staff-settings" class="staff-panel" style="display: none;">
                     <label for="scaling-factor-input">Scaling factor:</label>
                     <input type="number" id="scaling-factor-input" min="0" max="1" step="0.1">
 
                     <label for="blatancy-factor-input">Blatancy factor:</label>
                     <input type="number" id="blatancy-factor-input" min="0" max="1" step="0.1">
 
-                    <button id="save-settings-btn">Submit</button>
+                    <button type="button" id="save-settings-btn">Submit</button>
                 </div>
-                <p id="settings-status" style="margin-top:10px; font-size:16px;"></p>
+
+                <p id="settings-status" style="display: none;"></p>
             </div>
             <!--Waves Container-->
             <div>
@@ -152,7 +145,7 @@
         </div>
     </div>
 
-    <div id="game-container" class="hidden">
+    <div id="game-container" >
         <div class="alert alert-warning center-screen hidden" id="alert-pause" role="alert">
             <i class="far fa-pause-circle"></i> PAUSED
         </div>
@@ -172,8 +165,8 @@
             </div>
             <p id="score"></p>
             <p id="automation-advice-reminder" style="font-size: 18px; color: #000000;">
-                Remember, selecting a number highlights matching values, 
-                selecting an empty cell <br> highlights its row and column, and the <strong>Tips</strong> button offers additional suggestions</p>
+                <span class="match-highlight">Selecting a number</span> highlights matching values, 
+                <span class="row-col-highlight">selecting an empty cell</span> <br> highlights its row and column, and the <strong>Tips</strong> button offers additional suggestions</p>
             <div class="snackbar" id="snackbar-win">You won!🏆</div>
             <div class="snackbar" id="snackbar-lose">You lost!☹️</div>
         </div>
@@ -230,10 +223,11 @@
     <hr style="width: 100%; margin-left: auto; margin-right: auto;">
 
     <footer>
-        <p class="small text-center text-muted">Created by <a target="_blank" href="https://huaminghuangtw.github.io">Hua-Ming Huang</a>. &copy;
+        <p class="small text-center text-muted">Created by <a>Bezhan Mirzoev . &copy;</a>
             <script>
                 document.write(new Date().getFullYear());
             </script>
+            <br>Based on original implementation by <a target="_blank" href="https://github.com/huaminghuangtw/Web-Sudoku-Puzzle-Game?tab=readme-ov-file">Hua-Ming Huang</a>
         </p>
     </footer>
 

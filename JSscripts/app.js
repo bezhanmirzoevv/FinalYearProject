@@ -226,15 +226,7 @@ async function startGame() {
 
     resetGame();
 
-    if (id("difficulty-easy").checked) {
-        inputBoard = generateSudoku("easy");
-    } else if (id("difficulty-medium").checked) {
-        inputBoard = generateSudoku("medium");
-    } else if (id("difficulty-hard").checked) {
-        inputBoard = generateSudoku("hard");
-    } else if (id("difficulty-veryhard").checked) {
-        inputBoard = generateSudoku("very-hard");
-    }
+    inputBoard = generateSudoku(getSelectedDifficulty());
 
     try {
         await createAndStorePuzzleAttempt(localStorage.getItem("currentPuzzleID"));
@@ -596,15 +588,7 @@ function workOutScore() {
 async function refresh_puzzle() {
     resetGame();
     //id("spinner-container").classList.remove("hidden");
-    if (id("difficulty-easy").checked) {
-        inputBoard = generateSudoku("easy");
-    } else if (id("difficulty-medium").checked) {
-        inputBoard = generateSudoku("medium");
-    } else if (id("difficulty-hard").checked) {
-        inputBoard = generateSudoku("hard");
-    } else if (id("difficulty-veryhard").checked) {
-        inputBoard = generateSudoku("very-hard");
-    }
+    inputBoard = generateSudoku(getSelectedDifficulty());
 
     //id("spinner-container").classList.add("hidden");
 
@@ -670,6 +654,7 @@ function resetExperimentSession() {
     localStorage.removeItem("participantLoggedIn");
     localStorage.removeItem("experimentSessionId");
     localStorage.removeItem("puzzleAttemptId");
+    localStorage.removeItem("currentPuzzleID");
 }
 
 async function finishTest() {
@@ -684,13 +669,7 @@ async function finishTest() {
 
         try {
             await endExperimentSession();
-
-            localStorage.removeItem("participantId");
-            localStorage.removeItem("participantUsername");
-            localStorage.removeItem("participantLoggedIn");
-            localStorage.removeItem("experimentSessionId");
-            localStorage.removeItem("puzzleAttemptId");
-            localStorage.removeItem("currentPuzzleID");
+            resetExperimentSession();
 
             swal({
                 title: "Test completed",
@@ -710,6 +689,13 @@ async function finishTest() {
             });
         }
     });
+}
+
+function getSelectedDifficulty() {
+    if (id("difficulty-easy").checked) return "easy";
+    if (id("difficulty-medium").checked) return "medium";
+    if (id("difficulty-hard").checked) return "hard";
+    return "very-hard";
 }
 
 function getMoveContext() {

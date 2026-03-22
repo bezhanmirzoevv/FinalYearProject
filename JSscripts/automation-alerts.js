@@ -118,13 +118,13 @@ function getAdviceState() {
     // Find if this move matches the pattern and which occurrence it is
     for (let n = 1; n <= 80; n++) {
         // Pattern: 8 * floor((n - 1) / 2) + (n % 2 === 1 ? 3 : 5) → 3, 5, 11, 13, 19, 21, ...
-        let patternValue = 8 * Math.floor((n - 1) / 2) + (n % 2 === 1 ? 3 : 5);
+        let pattern = 8 * Math.floor((n - 1) / 2) + (n % 2 === 1 ? 3 : 5);
 
-        if (moveNumber === patternValue) {
+        if (moveNumber === pattern) {
             patternIndex = n;
             break;
         }
-        if (patternValue > moveNumber) break;
+        if (pattern > moveNumber) break;
     }
 
     // Not part of pattern → correct advice OR s = 0 → all advice is correct

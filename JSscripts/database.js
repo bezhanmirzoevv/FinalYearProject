@@ -20,6 +20,7 @@ async function getOrCreateParticipant(username) {
             .single();
 
         if (insertError) {
+            console.error("Error creating participant:", insertError);
             throw insertError;
         }
 
@@ -86,6 +87,7 @@ async function createExperimentSession(participantId) {
             .single();
 
         if (error) {
+            console.error("Error creating experiment session:", error);
             throw error;
         }
 
@@ -108,6 +110,7 @@ async function endExperimentSession() {
         .is("finished_at", null);
 
     if (error) {
+        console.error("Error ending experiment session:", error);
         throw error;
     }
 }
@@ -125,6 +128,7 @@ async function createPuzzleAttempt(sessionId, puzzleId, puzzleOrder) {
         .single();
 
     if (error) {
+        console.error("Error creating puzzle attempt:", error);
         throw error;
     }
 
@@ -212,6 +216,7 @@ async function logMove({
         .single();
 
     if (error) {
+        console.error("Error logging move:", error);
         throw error;
     }
 

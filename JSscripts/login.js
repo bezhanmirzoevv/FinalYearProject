@@ -3,8 +3,11 @@ document.addEventListener("DOMContentLoaded", function () {
     const usernameSubmitBtn = document.getElementById("username-submit-btn");
     const passwordInput = document.getElementById("staff-password-input");
     const loginStatus = document.getElementById("login-status");
-
     const settingStatus = document.getElementById("settings-status");
+    const scalingFactorInput = document.getElementById("scaling-factor-input");
+    const blatancyFactorInput = document.getElementById("blatancy-factor-input");
+    const saveSettingsBtn = document.getElementById("save-settings-btn");
+    const staffSettings = document.getElementById("staff-settings");
 
     async function hashPassword(password) {
         const encoder = new TextEncoder();
@@ -14,143 +17,138 @@ document.addEventListener("DOMContentLoaded", function () {
         return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
     }
 
+    function showMessage(element, message, color) {
+        element.textContent = message;
+        element.style.color = color;
+        element.style.display = "block";
+    }
 
-    usernameSubmitBtn.addEventListener("click", async function () {
+    function disableLoginForm() {
+        usernameInput.disabled = true;
+        passwordInput.disabled = true;
+        usernameSubmitBtn.disabled = true;
+    }
+
+    function isValidFactor(value) {
+        return !isNaN(value) && value >= 0 && value <= 1;
+    }
+
+    async function handleStaffLogin(username, password) {
+        if (passwordInput.classList.contains("hidden")) {
+            passwordInput.classList.remove("hidden");
+            passwordInput.focus();
+            return;
+        }
+
+        const { data, error } = await window.supabaseClient
+            .from("staff")
+            .select("id, username, password_hash")
+            .eq("username", username)
+            .maybeSingle();
+
+        if (error) {
+            throw error;
+        }
+
+        if (!data) {
+            showMessage(loginStatus, "Staff user not found.", "red");
+            return;
+        }
+
+        const enteredPasswordHash = await hashPassword(password);
+
+        if (enteredPasswordHash !== data.password_hash) {
+            showMessage(loginStatus, "Incorrect password.", "red");
+            return;
+        }
+
+        localStorage.setItem("isStaff", "true");
+        localStorage.setItem("staffId", data.id);
+        localStorage.setItem("staffUsername", data.username);
+
+        showMessage(loginStatus, "You have logged in as staff.", "white");
+        disableLoginForm();
+
+        staffSettings.style.display = "block";
+        scalingFactorInput.value = await getScalingFactor();
+        blatancyFactorInput.value = await getBlatancyFactor();
+    }
+
+    async function handleParticipantLogin(username) {
+        const participant = await getOrCreateParticipant(username);
+        const session = await createExperimentSession(participant.id);
+
+        localStorage.setItem("isStaff", "false");
+        localStorage.setItem("participantId", participant.id);
+        localStorage.setItem("participantUsername", participant.username);
+        localStorage.setItem("participantLoggedIn", "true");
+        localStorage.setItem("experimentSessionId", session.id);
+
+        showMessage(loginStatus, "Participant login successful.", "white");
+        disableLoginForm();
+
+        console.log("Participant:", participant);
+        console.log("Experiment session:", session);
+    }
+
+    async function handleLogin() {
         const username = usernameInput.value.trim().toLowerCase();
         const password = passwordInput.value.trim();
 
         if (!username) {
-            loginStatus.textContent = "Please enter a username.";
-            loginStatus.style.color = "red";
-            loginStatus.style.display = "block";
+            showMessage(loginStatus, "Please enter a username.", "red");
             return;
         }
 
-        if (username === "staff") {
-            if (passwordInput.classList.contains("hidden")) {
-                passwordInput.classList.remove("hidden");
-                passwordInput.focus();
-                return;
+        try {
+            if (username === "staff") {
+                await handleStaffLogin(username, password);
+            } else {
+                await handleParticipantLogin(username);
             }
+        } catch (err) {
+            console.error("Login error:", err);
 
-            try {
-                const { data, error } = await window.supabaseClient
-                    .from("staff")
-                    .select("id, username, password_hash")
-                    .eq("username", username)
-                    .maybeSingle();
-
-                if (error) {
-                    throw error;
-                }
-
-                if (!data) {
-                    loginStatus.textContent = "Staff user not found.";
-                    loginStatus.style.color = "red";
-                    loginStatus.style.display = "block";
-                    return;
-                }
-
-                const enteredPasswordHash = await hashPassword(password);
-
-                if (enteredPasswordHash === data.password_hash) {
-                    localStorage.setItem("isStaff", "true");
-                    localStorage.setItem("staffId", data.id);
-                    localStorage.setItem("staffUsername", data.username);
-
-                    loginStatus.textContent = "You have logged in as staff.";
-                    loginStatus.style.color = "white";
-                    loginStatus.style.display = "block";
-
-                    usernameInput.disabled = true;
-                    passwordInput.disabled = true;
-                    usernameSubmitBtn.disabled = true;
-
-                    id("staff-settings").style.display = "block";
-                    id("scaling-factor-input").value = await getScalingFactor();
-                    id("blatancy-factor-input").value = await getBlatancyFactor();
-                } else {
-                    loginStatus.textContent = "Incorrect password.";
-                    loginStatus.style.color = "red";
-                    loginStatus.style.display = "block";
-                }
-            } catch (err) {
-                console.error("Staff login error:", err);
-                loginStatus.textContent = "Database connection failed.";
-                loginStatus.style.color = "red";
-                loginStatus.style.display = "block";
-            }
-        } else {
-            try {
-                const participant = await getOrCreateParticipant(username);
-                const session = await createExperimentSession(participant.id);
-
-                localStorage.setItem("isStaff", "false");
-                localStorage.setItem("participantId", participant.id);
-                localStorage.setItem("participantUsername", participant.username);
-                localStorage.setItem("participantLoggedIn", "true");
-                localStorage.setItem("experimentSessionId", session.id);
-
-                loginStatus.textContent = "Participant login successful.";
-                loginStatus.style.color = "white";
-                loginStatus.style.display = "block";
-
-                usernameInput.disabled = true;
-                passwordInput.disabled = true;
-                usernameSubmitBtn.disabled = true;
-
-                console.log("Participant:", participant);
-                console.log("Experiment session:", session);
-            } catch (err) {
-                console.error("Participant login error:", err);
-                loginStatus.textContent = "Participant login failed.";
-                loginStatus.style.color = "red";
-                loginStatus.style.display = "block";
+            if (username === "staff") {
+                showMessage(loginStatus, "Database connection failed.", "red");
+            } else {
+                showMessage(loginStatus, "Participant login failed.", "red");
             }
         }
-    });
+    }
 
-    usernameInput.addEventListener("keydown", function (e) {
-        if (e.key === "Enter") {
-            e.preventDefault();
-            usernameSubmitBtn.click();
-        }
-    });
+    async function handleSaveSettings() {
+        const scalingFactor = parseFloat(scalingFactorInput.value);
+        const blatancyFactor = parseFloat(blatancyFactorInput.value);
 
-    passwordInput.addEventListener("keydown", function (e) {
-        if (e.key === "Enter") {
-            e.preventDefault();
-            usernameSubmitBtn.click();
-        }
-    });
-
-    id("save-settings-btn").addEventListener("click", async function () {    
-        const scalingFactor = parseFloat(document.getElementById("scaling-factor-input").value);
-        const blatancyFactor = parseFloat(document.getElementById("blatancy-factor-input").value);
-
-        if (isNaN(scalingFactor) || scalingFactor < 0 || scalingFactor > 1) {
-            settingStatus.textContent = "Scaling factor must be between 0 and 1.";
-            settingStatus.style.color = "red";
-            settingStatus.style.display = "block";
+        if (!isValidFactor(scalingFactor)) {
+            showMessage(settingStatus, "Scaling factor must be between 0 and 1.", "red");
             return;
         }
-        if (isNaN(blatancyFactor) || blatancyFactor < 0 || blatancyFactor > 1) {
-            settingStatus.textContent = "Blatancy factor must be between 0 and 1.";
-            settingStatus.style.color = "red";
-            settingStatus.style.display = "block";
+
+        if (!isValidFactor(blatancyFactor)) {
+            showMessage(settingStatus, "Blatancy factor must be between 0 and 1.", "red");
             return;
         }
-        try {            
+
+        try {
             await setExperimentSettings(scalingFactor, blatancyFactor);
-            settingStatus.textContent = "Experiment settings updated.";
-            settingStatus.style.color = "white";
-            settingStatus.style.display = "block";
+            showMessage(settingStatus, "Experiment settings updated.", "white");
         } catch (err) {
             console.error("Error updating settings:", err);
-            settingStatus.textContent = "Failed to update settings.";
-            settingStatus.style.color = "red";
-            settingStatus.style.display = "block";
+            showMessage(settingStatus, "Failed to update settings.", "red");
         }
+    }
 
-    });
+    function handleEnterKey(event) {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            handleLogin();
+        }
+    }
+
+    usernameSubmitBtn.addEventListener("click", handleLogin);
+    saveSettingsBtn.addEventListener("click", handleSaveSettings);
+    usernameInput.addEventListener("keydown", handleEnterKey);
+    passwordInput.addEventListener("keydown", handleEnterKey);
 });

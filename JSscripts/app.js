@@ -81,10 +81,8 @@ document.addEventListener('DOMContentLoaded', function() {
         })
     }
     // Add event listener to "Tips" button
-    id("tips-btn").addEventListener("click", async function () {
-        await display_tips();
-    });
-    // Add event listener to "Refresh puzzle" button
+    id("tips-btn").addEventListener("click", async function () { await display_tips(); });
+    // Add event listener to "Refresh puzzle" button to load a new puzzle and reset the game
     id("refresh-btn").addEventListener("click", refresh_puzzle);
     // Add event listener to "Pause" button
     id("pause-btn").addEventListener("click", pause);
@@ -99,6 +97,7 @@ function resetGame() {
     id("game-container").style.visibility = "hidden";
     // Close alert if it exists
     if (id("alert-pause")) { $("#alert-pause").slideUp("200"); }
+
     // Initialize variables
     disableSelect = false;
     timerType = "stopwatch";
@@ -124,6 +123,7 @@ function resetGame() {
     } else if (id("time-stopwatch").checked) {
         timerType = "stopwatch";
     }*/
+
     // Set up elements
     if (timerType == "countdown") {
         id("time-1").classList.remove("hidden");
@@ -238,10 +238,8 @@ async function startGame() {
 
     try {
         await createAndStorePuzzleAttempt(localStorage.getItem("currentPuzzleID"));
-        scalingFactor = await getScalingFactor(); // Scaling factor (0 = no incorrect advice, 1 = all incorrect advice)
-        blatancyFactor = await getBlatancyFactor(); // Blatancy factor (0 = all incorrect advice is slightly incorrect, 1 = all incorrect advice is blatantly incorrect)
-        console.log("Scaling factor (s):", scalingFactor);
-        console.log("Blatancy factor (a):", blatancyFactor);
+        scalingFactor = await getScalingFactor();
+        blatancyFactor = await getBlatancyFactor();
         initializeGame(inputBoard);
         document.getElementById("game-container").classList.remove("hidden");
     } catch (err) {
@@ -278,7 +276,7 @@ async function endGame() {
         cancelAnimationFrame(stopwatch);
         var x = id("snackbar-win");
         var audio = new Audio('./audio/audio-win.wav');
-        title_txt = "Congrats!🎉";
+        title_txt = "Congrats Puzzle Complete!🎉";
     }
 
     audio.play();
@@ -290,7 +288,7 @@ async function endGame() {
 
     swal({
         title: title_txt,
-        text: "Try again? Press 'New game!'🚀",
+        text: "You can complete more puzzles by clicking the 'Next Puzzle' button." + "\n" + "Your final score is: " + Math.round(score) + " points.",
         icon: "info",
     });
 
@@ -406,7 +404,17 @@ async function handleCorrectMove(moveContext) {
 
     currentBoard[moveContext.row][moveContext.col] = selectedNum.textContent;
 
-    await logCorrectMoveToDatabase(cellIndex, timeTakenSeconds);
+    await logMove({
+            puzzleAttemptId: parseInt(localStorage.getItem("puzzleAttemptId"), 10),
+            moveNumber: moveNumber,
+            cellIndex: cellIndex,
+            adviceState: getAdviceState(),
+            tips: clickedForTips && tips && tips.length > 0 ? tips : null,
+            incorrectInputsCount: wrongInputsSinceLastMove,
+            timeTakenSeconds: timeTakenSeconds,
+            finalInput: selectedTile.textContent
+        });
+
     await updatePuzzleAttemptProgress({ 
         puzzleAttemptId: parseInt(localStorage.getItem("puzzleAttemptId"), 10),
         score: Math.round(score),
@@ -425,29 +433,6 @@ async function handleCorrectMove(moveContext) {
     }
 }
 
-
-
-async function logCorrectMoveToDatabase(cellIndex, timeTakenSeconds) {
-    try {
-        const puzzleAttemptId = localStorage.getItem("puzzleAttemptId");
-        if (!puzzleAttemptId) return;
-
-        const moveLog = await logMove({
-            puzzleAttemptId: parseInt(puzzleAttemptId, 10),
-            moveNumber: moveNumber,
-            cellIndex: cellIndex,
-            adviceState: getAdviceState(),
-            tips: clickedForTips && tips && tips.length > 0 ? tips : null,
-            incorrectInputsCount: wrongInputsSinceLastMove,
-            timeTakenSeconds: timeTakenSeconds,
-            finalInput: selectedTile.textContent
-        });
-
-        console.log("Move logged:", moveLog);
-    } catch (err) {
-        console.error("Failed to log move:", err);
-    }
-}
 
 async function handleIncorrectMove(moveContext) {
     clearHighlights();
@@ -498,40 +483,6 @@ async function logIncorrectMoveToDatabase(moveContext, incorrectInput) {
     } catch (err) {
         console.error("Failed to log incorrect input:", err);
     }
-}
-
-function parseTip(tip) {
-    if (!tip) return null;
-
-    const match = tip.match(/(?:Row\s+(\d+),\s*Col\s+(\d+)|Col\s+(\d+),\s*Row\s+(\d+))\s*→\s*(\d+)/i);
-    if (!match) return null;
-
-    const row = parseInt(match[1] || match[4], 10);
-    const col = parseInt(match[2] || match[3], 10);
-    const value = parseInt(match[5], 10);
-
-    if (Number.isNaN(row) || Number.isNaN(col) || Number.isNaN(value)) {
-        return null;
-    }
-
-    return { row, col, value };
-}
-
-function doesIncorrectInputMatchATip(row, col, inputValue) {
-    if (!Array.isArray(tips) || tips.length === 0) return false;
-
-    return tips.some(function(tip) {
-        const parsedTip = parseTip(tip);
-        return parsedTip &&
-               parsedTip.row === row &&
-               parsedTip.col === col &&
-               parsedTip.value === inputValue;
-    });
-}
-
-function didMatchingNumberHighlightInfluenceInput(inputValue) {
-    if (!lastHighlightedNumberValue) return false;
-    return String(lastHighlightedNumberValue) === String(inputValue);
 }
 
 function getRowColGridMatches(moveContext, inputValue) {
@@ -587,7 +538,7 @@ function clearSelectedTileAfterDelay(cssClassName) {
         selectedTile.classList.remove(cssClassName);
         selectedTile.classList.remove("selected");
         selectedTile = null;
-    }, 1000);
+    }, 100);
 }
 
 function hideToastIfOpen() {
@@ -640,45 +591,6 @@ function workOutScore() {
     displayScore(score);
 
     lastMoveTime = now;
-}
-
-function show_solution() {
-    // Display solution to the current Sudoku puzzle, highlighting the answers with green color
-    for (let i = 0; i < id("board").children.length; i++) {
-        var tile = id("board").children[i];
-        if (tile.textContent != solution[tile.id]) {
-            tile.textContent = solution[tile.id];
-            // Update the curernt status of Sudoku board
-            currentBoard[Math.floor(tile.id / board_size)][tile.id % board_size] = solution[tile.id];
-            tile.classList.add("green-text");
-        }
-    }
-    // Display solution to the console
-    console.log(board_string_to_display_string(solution));
-    // Pause countdown timer or stopwatch
-    pause();
-    // Set button accessibility
-    id("tips-btn").disabled = true;
-    id("resume-btn").disabled = true;
-    // Display message to the user
-    swal({
-        title: "Try again?😉",
-        text: "Press 'New game!' button.🚀",
-        icon: "info",
-    });
-}
-
-function solve_one_step() {
-    for (let i = 0; i < id("board").children.length; i++) {
-        var tile = id("board").children[i];
-        if (tile.textContent != solution[tile.id]) {
-            tile.textContent = solution[tile.id];
-            // Update the curernt status of Sudoku board
-            currentBoard[Math.floor(tile.id / board_size)][tile.id % board_size] = solution[tile.id];
-            tile.classList.add("green-text");
-            break;
-        }
-    }
 }
 
 async function refresh_puzzle() {

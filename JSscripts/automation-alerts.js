@@ -29,10 +29,10 @@ function clearHighlights() {
     }
 }
 
-async function highlightMatchingNumbers(value, clickedTile) {
+function highlightMatchingNumbers(value, clickedTile) {
     if (!value) return;
 
-    let adviceState = await getAdviceState();
+    let adviceState = getAdviceState();
     let matches = getMatchingTiles(value).filter(tile => tile !== clickedTile);
 
     clickedTile.classList.add("match-highlight");
@@ -64,10 +64,15 @@ async function highlightMatchingNumbers(value, clickedTile) {
     }
 }
 
-async function highlightRowAndColumn(tile) {
+function didMatchingNumberHighlightInfluenceInput(inputValue) {
+    if (!lastHighlightedNumberValue) return false;
+    return String(lastHighlightedNumberValue) === String(inputValue);
+}
+
+function highlightRowAndColumn(tile) {
     if (!tile) return;
 
-    let adviceState = await getAdviceState();
+    let adviceState = getAdviceState();
 
     let tileIndex = parseInt(tile.id);
     let row = Math.floor(tileIndex / board_size);
@@ -152,13 +157,13 @@ function getAdviceState() {
     return "slightly-incorrect";
 }
 
-async function display_tips() {
+function display_tips() {
     clickedForTips = true;
     let currentState = board_grid_to_string(currentBoard);
     candidates = get_candidates(currentState);
     if (lastBoardState != currentState) {
 
-        let adviceState = await getAdviceState();
+        let adviceState = getAdviceState();
         //let adviceState = "slightly-incorrect"
         tips = [];
 
@@ -231,4 +236,33 @@ async function display_tips() {
     });
 
     myToast.show();
+}
+
+function parseTip(tip) {
+    if (!tip) return null;
+
+    const match = tip.match(/(?:Row\s+(\d+),\s*Col\s+(\d+)|Col\s+(\d+),\s*Row\s+(\d+))\s*→\s*(\d+)/i);
+    if (!match) return null;
+
+    const row = parseInt(match[1] || match[4], 10);
+    const col = parseInt(match[2] || match[3], 10);
+    const value = parseInt(match[5], 10);
+
+    if (Number.isNaN(row) || Number.isNaN(col) || Number.isNaN(value)) {
+        return null;
+    }
+
+    return { row, col, value };
+}
+
+function doesIncorrectInputMatchATip(row, col, inputValue) {
+    if (!Array.isArray(tips) || tips.length === 0) return false;
+
+    return tips.some(function(tip) {
+        const parsedTip = parseTip(tip);
+        return parsedTip &&
+               parsedTip.row === row &&
+               parsedTip.col === col &&
+               parsedTip.value === inputValue;
+    });
 }

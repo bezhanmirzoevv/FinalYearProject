@@ -163,11 +163,13 @@
                 <div id="stopwatch-container" class="hidden" style="margin-top: 35px"></div>
             </div>
             <p id="score"></p>
-            <p id="automation-advice-reminder" style="font-size: 18px; color: #000000;">
-                <span class="match-highlight">Selecting a number</span> highlights matching values, 
-                <span class="row-col-highlight">selecting an empty cell</span> <br> highlights its row and column, and the <strong>Tips</strong> button offers additional suggestions
-                <br><br> <strong>How to Play:</strong> Fill in the empty cells by clicking the column of numbers on the right hand side, 
-                <br>ensuring that each number appears only once in each row, column, and 3x3 subgrid.
+            <p id="automation-advice-reminder" class="automation-advice">
+                <strong>Rules of Sudoku:</strong> Ensure that each number appears only once in each row, column, and 3x3 subgrid.
+                <br><br><strong>How to Play:</strong> 
+                <br>Fill in empty cells by clicking the column of numbers on the right hand side.
+                <br><span class="match-highlight">Selecting a number</span> highlights matching values. <br> 
+                <span class="row-col-highlight">Selecting an empty cell</span> highlights its row and column.
+                <br>If you find yourself stuck, the <strong>Tips</strong> button can provide valuable insights to help you progress.
             </p>
             <div class="snackbar" id="snackbar-win">You won!🏆</div>
             <div class="snackbar" id="snackbar-lose">You lost!☹️</div>

@@ -427,7 +427,7 @@ async function handleCorrectMove(moveContext) {
         disableSelect = false;
         selectedTileRef.classList.remove("correct");
         selectedTileRef.classList.remove("selected");
-        selectedTileRef = null;
+        selectedTile = null;
     }, 1000);
 
     if (isDone()) {

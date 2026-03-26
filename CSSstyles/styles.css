@@ -52,6 +52,7 @@ h1 {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    padding-left: 2rem;
 
     height: var(--board-size);
     width: calc(var(--board-size) / 9); /* same as one tile */
@@ -324,6 +325,12 @@ footer {
 
 .fas.fa-check {
     color: green;
+}
+
+.automation-advice {
+    font-size: 18px;
+    color: #000000;
+    text-align: left;
 }
 
 /* Animation */

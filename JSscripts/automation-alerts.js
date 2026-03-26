@@ -222,6 +222,21 @@ function display_tips() {
         // Take 10 random tips
         tips = tips.slice(0, 10);
 
+        // Sort tips by row and then column
+        tips.sort(function(a, b) {
+            const aMatch = a.match(/Row\s+(\d+),\s*Col\s+(\d+)/);
+            const bMatch = b.match(/Row\s+(\d+),\s*Col\s+(\d+)/);
+            const aRow = parseInt(aMatch[1], 10);
+            const aCol = parseInt(aMatch[2], 10);
+            const bRow = parseInt(bMatch[1], 10);
+            const bCol = parseInt(bMatch[2], 10);
+            if (aRow !== bRow) {
+                return aRow - bRow;
+            }
+            return aCol - bCol;
+        });
+
+
         lastBoardState = currentState;
     }
 

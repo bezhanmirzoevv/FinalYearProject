@@ -394,7 +394,6 @@ async function handleCorrectMove(moveContext) {
     audio.play();
 
     workOutScore();
-    moveNumber++;
 
     selectedTile.classList.add("correct");
 
@@ -402,7 +401,7 @@ async function handleCorrectMove(moveContext) {
 
     await logMove({
             puzzleAttemptId: parseInt(localStorage.getItem("puzzleAttemptId"), 10),
-            moveNumber: moveNumber,
+            moveNumber: moveNumber+1,
             cellIndex: cellIndex,
             adviceState: getAdviceState(),
             tips: clickedForTips && tips && tips.length > 0 ? tips : null,
@@ -417,6 +416,7 @@ async function handleCorrectMove(moveContext) {
         totalTimeSeconds: totalTimeSeconds
     });
 
+    moveNumber++;
     lastMoveTime = Date.now();
     wrongInputsSinceLastMove = 0;
     clickedForTips = false;

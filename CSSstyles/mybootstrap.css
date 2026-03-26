@@ -243,6 +243,16 @@ btn-check:focus+.btn-outline-primary,
     border-bottom-left-radius: 0;
 }
 
+#tips-btn {
+        font-size: 1.2rem;
+        margin-right: 1rem;
+    }
+
+#finished-btn,
+#refresh-btn {
+    margin-left: 3rem;
+}
+
 @-webkit-keyframes spinner-border {
     to {
         transform: rotate(360deg)/* rtl:ignore */

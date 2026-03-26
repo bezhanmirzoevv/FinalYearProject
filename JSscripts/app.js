@@ -268,7 +268,7 @@ async function endGame() {
         cancelAnimationFrame(stopwatch);
         var x = id("snackbar-win");
         var audio = new Audio('./audio/audio-win.wav');
-        title_txt = "Congrats Puzzle Complete!🎉";
+        title_txt = "Congrats your Score is: " + Math.round(score) + "🎉";
     }
 
     audio.play();
@@ -280,8 +280,8 @@ async function endGame() {
 
     swal({
         title: title_txt,
-        text: "You can complete more puzzles by clicking the 'Next Puzzle' button." + "\n" + "Your final score is: " + Math.round(score) + " points.",
-        icon: "info",
+        text: "You can complete more puzzles by clicking the 'Next Puzzle'" + "\n" + "\n" + "Please click 'Finished with Test' if you are done playing.",
+        icon: "success",
     });
 
     id("tips-btn").disabled = true;
@@ -384,10 +384,14 @@ async function updateMove() {
 
 async function handleCorrectMove(moveContext) {
     clearHighlights();
+    disableSelect = true;
 
     const timeTakenSeconds = getTimeTakenSeconds();
     const cellIndex = getDisplayCellIndex(moveContext.index);
+    const selectedTileRef = selectedTile;
     const totalTimeSeconds = (Math.floor(elapsedTime)) / 1000; // Convert to seconds
+    var audio = new Audio('./audio/audio-correct-move.mp3');
+    audio.play();
 
     workOutScore();
     moveNumber++;
@@ -418,7 +422,13 @@ async function handleCorrectMove(moveContext) {
     clickedForTips = false;
 
     clearSelectedNumber();
-    clearSelectedTileAfterDelay("correct");
+
+    setTimeout(function() {
+        disableSelect = false;
+        selectedTileRef.classList.remove("correct");
+        selectedTileRef.classList.remove("selected");
+        selectedTileRef = null;
+    }, 1000);
 
     if (isDone()) {
         endGame();
@@ -434,6 +444,8 @@ async function handleIncorrectMove(moveContext) {
 
     const incorrectInput = parseInt(selectedNum.textContent, 10);
     const selectedTileRef = selectedTile;
+    var audio = new Audio('./audio/audio-incorrect-move.mp3');
+    audio.play();
 
     await logIncorrectMoveToDatabase(moveContext, incorrectInput);
     clearSelectedNumber();
@@ -525,13 +537,6 @@ function clearSelectedNumber() {
     selectedNum = null;
 }
 
-function clearSelectedTileAfterDelay(cssClassName) {
-    setTimeout(function () {
-        selectedTile.classList.remove(cssClassName);
-        selectedTile.classList.remove("selected");
-        selectedTile = null;
-    }, 100);
-}
 
 function hideToastIfOpen() {
     let toast = bootstrap.Toast.getInstance(id("myToast"));
@@ -673,7 +678,7 @@ async function finishTest() {
 
             swal({
                 title: "Test completed",
-                text: "Thank you for participating!" + "\n" + "You can now close this window and return to Qualtrics.",
+                text: "Thank you for participating!" + "\n" + "\n" + "You can now close this window and return to Qualtrics.",
                 icon: "success"
             }).then(() => {
                 location.reload();

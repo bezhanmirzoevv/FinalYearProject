@@ -39,6 +39,8 @@ The following structure outlines all files included in the project. While timer-
 /project-root
 │
 ├── audio
+│   ├── audio-correct-move.mp3          # Sound effect played when correct move is made
+│   ├── audio-incorrect-move.mp3        # Sound effect played when incorrect move is made
 │   ├── audio-lose.wav          # Sound effect played when the player loses or fails the puzzle (only applicable if timer mode is used)
 │   ├── audio-win.wav           # Sound effect played when the player completes the puzzle successfully
 │

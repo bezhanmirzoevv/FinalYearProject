@@ -322,6 +322,9 @@ footer {
     background-color: #dddddd;
 }
 
+.fas.fa-check {
+    color: green;
+}
 
 /* Animation */
 

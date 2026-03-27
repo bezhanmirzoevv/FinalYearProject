@@ -13,7 +13,7 @@ The system records user interactions such as moves, incorrect inputs, and hint u
 ## Features
 
 * User login (session-based)
-* Secure staff login for modification of experiment settings
+* Staff login for modification of experiment settings
 * Sudoku puzzle generation and gameplay
 * Real-time input validation
 * Computer-generated advice with varying correctness levels:

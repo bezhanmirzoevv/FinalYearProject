@@ -135,10 +135,123 @@ create index idx_incorrect_inputs_cell_index
 create index idx_incorrect_inputs_matched_tip
     on incorrect_inputs(matched_tip);
 
--- Staff password hash
--- 240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9
--- for "admin123"
+-- Enable row level security on all tables
+
+alter table experiment_settings enable row level security;
+alter table staff enable row level security;
+alter table participants enable row level security;
+alter table experiment_sessions enable row level security;
+alter table puzzle_attempts enable row level security;
+alter table move_logs enable row level security;
+alter table incorrect_inputs enable row level security;
+
+-- SELECT policies for all tables allow read access to anon role, 
+-- and INSERT/UPDATE policies allow writing with no restrictions for simplicity in this coursework context. 
+-- In a real application, these would be more restrictive.
+
+-- participants
+create policy "participants_select"
+on participants
+for select
+to anon
+using (true);
+
+create policy "participants_insert"
+on participants
+for insert
+to anon
+with check (true);
+
+-- experiment_settings
+create policy "experiment_settings_select"
+on experiment_settings
+for select
+to anon
+using (true);
+
+create policy "experiment_settings_update"
+on experiment_settings
+for update
+to anon
+using (true)
+with check (true);
+
+-- experiment_sessions
+create policy "experiment_sessions_select"
+on experiment_sessions
+for select
+to anon
+using (true);
+
+create policy "experiment_sessions_insert"
+on experiment_sessions
+for insert
+to anon
+with check (true);
+
+create policy "experiment_sessions_update"
+on experiment_sessions
+for update
+to anon
+using (true)
+with check (true);
+
+-- puzzle_attempts
+create policy "puzzle_attempts_select"
+on puzzle_attempts
+for select
+to anon
+using (true);
+
+create policy "puzzle_attempts_insert"
+on puzzle_attempts
+for insert
+to anon
+with check (true);
+
+create policy "puzzle_attempts_update"
+on puzzle_attempts
+for update
+to anon
+using (true)
+with check (true);
+
+-- move_logs
+create policy "move_logs_select"
+on move_logs
+for select
+to anon
+using (true);
+
+create policy "move_logs_insert"
+on move_logs
+for insert
+to anon
+with check (true);
+
+-- incorrect_inputs
+create policy "incorrect_inputs_select"
+on incorrect_inputs
+for select
+to anon
+using (true);
+
+create policy "incorrect_inputs_insert"
+on incorrect_inputs
+for insert
+to anon
+with check (true);
+
+-- staff
+-- This allows client-side staff login by exposing password hashes, only kept for coursework simplicity
+create policy "staff_select"
+on staff
+for select
+to anon
+using (true);
+
 -- Insert initial test data
+-- Staff user created manually with password "admin123"
 insert into staff (username, password_hash) values (
     'staff',
     '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9'

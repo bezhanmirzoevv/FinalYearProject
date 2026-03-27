@@ -179,4 +179,4 @@ The template was adapted and extended to support:
 ## Author
 Bezhan Mirzoev
 Final Year Dissertation Project
-BSc Computer Science
+BSc Computer Science with Games Technology

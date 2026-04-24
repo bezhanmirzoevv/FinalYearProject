@@ -3,6 +3,8 @@ Bezhan Mirzoev Final Year Project
 
 **Hosted Version:** https://bezhanmirzoevv.github.io/FinalYearProject/
 
+---
+
 ## Overview
 
 This project is a web-based Sudoku game developed as part of my final year project.
